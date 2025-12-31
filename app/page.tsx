@@ -1,65 +1,129 @@
-import Image from "next/image";
+import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { AddProjectDialog } from "@/components/add-project-dialog"
+import { ProjectActions } from "@/components/project-actions"
+import { CalendarDays, Package, ArrowRight, FolderOpen, Archive } from 'lucide-react'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+export default async function ProjectList() {
+  const supabase = await createClient()
+
+  // Fetch projects with product count
+  const { data: projects, error } = await supabase
+    .from('projects')
+    .select('*, products(count)')
+    .order('archived', { ascending: true })
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <div className="text-destructive">Erreur: {error.message}</div>
+      </div>
+    )
+  }
+
+  const activeProjects = projects?.filter(p => !p.archived) || []
+  const archivedProjects = projects?.filter(p => p.archived) || []
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="container mx-auto px-4 py-6 md:py-10">
+      {/* Header */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mes Événements</h1>
+          <p className="text-muted-foreground mt-1">Sélectionnez un projet pour gérer son stock.</p>
+        </div>
+        <AddProjectDialog />
+      </div>
+
+      {/* Active Projects Grid */}
+      {activeProjects.length === 0 && archivedProjects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <FolderOpen className="h-16 w-16 text-muted-foreground/30 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Aucun projet</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Créez votre premier événement pour commencer à gérer votre inventaire.
           </p>
+          <AddProjectDialog />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+      ) : (
+        <>
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {activeProjects.map((project) => {
+              const productCount = project.products?.[0]?.count || 0
+              return (
+                <Card key={project.id} className="h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <Link href={`/projects/${project.id}`} className="flex-1 group">
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                          {project.name}
+                        </CardTitle>
+                      </Link>
+                      <ProjectActions projectId={project.id} projectName={project.name} isArchived={false} />
+                    </div>
+                    <CardDescription className="flex items-center gap-2 mt-2">
+                      <CalendarDays className="h-4 w-4" />
+                      {project.start_date
+                        ? new Date(project.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : new Date(project.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                      }
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link href={`/projects/${project.id}`} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Package className="h-4 w-4" />
+                        <span>{productCount} produit{productCount !== 1 ? 's' : ''}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground/60 group-hover:text-primary/60 transition-colors flex items-center gap-1">
+                        Voir <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Archived Projects */}
+          {archivedProjects.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-muted-foreground">
+                <Archive className="h-5 w-5" /> Projets archivés
+              </h2>
+              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {archivedProjects.map((project) => {
+                  const productCount = project.products?.[0]?.count || 0
+                  return (
+                    <Card key={project.id} className="h-full opacity-60 hover:opacity-100 transition-all">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <Link href={`/projects/${project.id}`} className="flex-1 group">
+                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                              {project.name}
+                            </CardTitle>
+                          </Link>
+                          <ProjectActions projectId={project.id} projectName={project.name} isArchived={true} />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Package className="h-4 w-4" />
+                          <span>{productCount} produit{productCount !== 1 ? 's' : ''}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </main>
+  )
 }

@@ -1,0 +1,30 @@
+{
+    "name": "Adigart Stock",
+    "short_name": "Stock",
+    "description": "Application de gestion de stock pour événements",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#0a0a0a",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/assets/FAV-ICON-2.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/assets/FAV-ICON-2.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "lang": "fr",
+    "dir": "ltr"
+}
