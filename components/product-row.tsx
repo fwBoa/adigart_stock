@@ -245,7 +245,19 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                             <span className="text-xs text-muted-foreground">?</span>
                         </div>
                     )}
-                    <div className="font-medium">{product.name}</div>
+                    <div className="flex flex-col">
+                        <div className="font-medium">{product.name}</div>
+                        {variants.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1 max-w-[300px]">
+                                {variants.map(v => (
+                                    <span key={v.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/50">
+                                        {v.size || ''}{v.size && v.color ? '/' : ''}{v.color || ''}
+                                        <span className={`ml-1 ${v.stock <= 5 ? 'text-orange-600 font-bold' : 'opacity-70'}`}>({v.stock})</span>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </td>
             <td className="p-4 align-middle text-muted-foreground">
