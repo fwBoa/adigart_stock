@@ -222,6 +222,8 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
         ? variants.reduce((sum, v) => sum + v.stock, 0)
         : product.stock
 
+    const currentVariantsTotal = variants.reduce((sum, v) => sum + v.stock, 0)
+
     const incrementQty = () => setQty(prev => Math.min(prev + 1, totalStock))
     const decrementQty = () => setQty(prev => Math.max(prev - 1, 1))
 
@@ -269,7 +271,8 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
             </td>
             <td className="p-4 align-middle">
                 <div className="flex items-center gap-2 justify-end">
-                    {/* Edit & Delete */}
+                    {/* Add Variant, Edit & Delete */}
+                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
                     <EditProductDialog product={product} categories={categories} projectId={projectId} />
                     <Button
                         variant="ghost"

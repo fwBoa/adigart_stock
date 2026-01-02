@@ -51,15 +51,24 @@ interface EditProductDialogProps {
 export function EditProductDialog({ product, categories, projectId }: EditProductDialogProps) {
     const [open, setOpen] = useState(false)
     const [state, action, isPending] = useActionState(updateProduct, initialState)
+    const [lastMessage, setLastMessage] = useState('')
 
     useEffect(() => {
-        if (state.message === 'Produit mis à jour' && open) {
+        if (state.message === 'Produit mis à jour' && state.message !== lastMessage && open) {
             setOpen(false)
+            setLastMessage(state.message)
         }
-    }, [state.message, open])
+    }, [state.message, open, lastMessage])
+
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen)
+        if (newOpen) {
+            setLastMessage('')
+        }
+    }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Pencil className="h-4 w-4" />

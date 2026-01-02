@@ -77,7 +77,7 @@ export function AddVariantDialog({ productId, productName, projectId, productSto
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8" disabled={remainingStock <= 0}>
+                <Button variant="outline" size="sm" className="h-8">
                     <Plus className="h-3 w-3 mr-1" />
                     Variante
                 </Button>
