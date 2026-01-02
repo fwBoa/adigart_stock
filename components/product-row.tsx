@@ -4,9 +4,10 @@ import { useState, useActionState, useTransition } from 'react'
 import { processTransaction, TransactionState, deleteProduct } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, ShoppingCart, Gift, Minus, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Gift, Minus, Plus, Trash2 } from 'lucide-react'
 import { RestockDialog } from '@/components/restock-dialog'
 import { EditProductDialog } from '@/components/edit-product-dialog'
+import { SaleDialog } from '@/components/sale-dialog'
 
 type Category = {
     id: string
@@ -89,10 +90,10 @@ export function ProductCard({ product, projectId, categories }: ProductRowProps)
                 <div className="flex items-center gap-2">
                     <span
                         className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-sm font-medium ${product.stock <= 5
-                                ? product.stock === 0
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? product.stock === 0
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             }`}
                     >
                         {product.stock} en stock
@@ -137,16 +138,12 @@ export function ProductCard({ product, projectId, categories }: ProductRowProps)
 
                 {/* Action Buttons */}
                 <div className="flex-1 flex gap-2">
-                    <TransactionButton
+                    <SaleDialog
                         productId={product.id}
-                        type="SALE"
+                        productName={product.name}
                         quantity={qty}
                         amount={product.price * qty}
                         disabled={product.stock === 0}
-                        label="Vendre"
-                        icon={<ShoppingCart className="h-4 w-4" />}
-                        variant="default"
-                        className="flex-1 h-10"
                     />
                     <TransactionButton
                         productId={product.id}
@@ -212,10 +209,10 @@ export function ProductTableRow({ product, projectId, categories }: ProductRowPr
                 <div className="flex items-center justify-end gap-2">
                     <span
                         className={`inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-full text-sm font-medium ${product.stock <= 5
-                                ? product.stock === 0
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? product.stock === 0
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             }`}
                     >
                         {product.stock}
@@ -270,15 +267,12 @@ export function ProductTableRow({ product, projectId, categories }: ProductRowPr
                     </div>
 
                     {/* Transaction Buttons */}
-                    <TransactionButton
+                    <SaleDialog
                         productId={product.id}
-                        type="SALE"
+                        productName={product.name}
                         quantity={qty}
                         amount={product.price * qty}
                         disabled={product.stock === 0}
-                        label="Vendre"
-                        icon={<ShoppingCart className="h-4 w-4" />}
-                        variant="default"
                     />
                     <TransactionButton
                         productId={product.id}

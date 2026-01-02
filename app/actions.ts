@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 const TransactionSchema = z.object({
     productId: z.string().uuid(),
     type: z.enum(['SALE', 'GIFT']),
+    paymentMethod: z.enum(['CASH', 'CARD']).optional(),
     quantity: z.number().int().positive(),
     amount: z.number().nonnegative(),
 })
@@ -25,6 +26,7 @@ export type TransactionState = {
     errors?: {
         productId?: string[]
         type?: string[]
+        paymentMethod?: string[]
         quantity?: string[]
         amount?: string[]
     }
@@ -34,6 +36,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
     const validatedFields = TransactionSchema.safeParse({
         productId: formData.get('productId'),
         type: formData.get('type'),
+        paymentMethod: formData.get('paymentMethod') || undefined,
         quantity: Number(formData.get('quantity')),
         amount: Number(formData.get('amount')),
     })
@@ -45,7 +48,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
         }
     }
 
-    const { productId, type, quantity, amount } = validatedFields.data
+    const { productId, type, paymentMethod, quantity, amount } = validatedFields.data
 
     const supabase = await createClient()
 
@@ -53,6 +56,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
     const { data, error } = await supabase.rpc('process_transaction', {
         p_product_id: productId,
         p_type: type,
+        p_payment_method: type === 'SALE' ? (paymentMethod || 'CASH') : null,
         p_quantity: quantity,
         p_amount: amount,
     })

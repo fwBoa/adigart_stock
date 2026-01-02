@@ -116,6 +116,7 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                                     <th className="p-4 font-medium text-muted-foreground">Date</th>
                                     <th className="p-4 font-medium text-muted-foreground">Produit</th>
                                     <th className="p-4 font-medium text-muted-foreground">Type</th>
+                                    <th className="p-4 font-medium text-muted-foreground">Paiement</th>
                                     <th className="p-4 font-medium text-muted-foreground text-right">Qté</th>
                                     <th className="p-4 font-medium text-muted-foreground text-right">Montant</th>
                                 </tr>
@@ -144,6 +145,16 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                                                     <><Gift className="h-3 w-3" /> Don</>
                                                 )}
                                             </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {transaction.type === 'SALE' && transaction.payment_method && (
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${transaction.payment_method === 'CASH'
+                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                    }`}>
+                                                    {transaction.payment_method === 'CASH' ? 'Espèces' : 'Carte'}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="p-4 text-right">{transaction.quantity}</td>
                                         <td className="p-4 text-right font-medium">

@@ -32,11 +32,15 @@ create table products (
 -- Enum for Transaction Type
 create type transaction_type as enum ('SALE', 'GIFT');
 
+-- Enum for Payment Method
+create type payment_method as enum ('CASH', 'CARD');
+
 -- Transactions Table
 create table transactions (
   id uuid primary key default gen_random_uuid(),
   product_id uuid references products(id) not null,
   type transaction_type not null,
+  payment_method payment_method,
   quantity integer not null check (quantity > 0),
   amount numeric(10, 2) not null default 0,
   created_at timestamp with time zone default now()
