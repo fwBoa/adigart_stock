@@ -53,7 +53,7 @@ export function AddVariantDialog({ productId, productName, projectId, productSto
                 sku: sku || undefined,
             })
 
-            if (result.message === 'Variante créée') {
+            if (result.message?.includes('Variante créée')) {
                 setOpen(false)
                 setSize('')
                 setColor('')

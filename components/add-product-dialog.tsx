@@ -39,7 +39,7 @@ export function AddProductDialog({ categories, projectId }: { categories: Catego
     const [lastMessage, setLastMessage] = useState('')
 
     useEffect(() => {
-        if (state.message === 'Produit créé avec succès' && state.message !== lastMessage && open) {
+        if (state.message?.includes('créé avec succès') && state.message !== lastMessage && open) {
             setOpen(false)
             setLastMessage(state.message)
         }
@@ -48,7 +48,7 @@ export function AddProductDialog({ categories, projectId }: { categories: Catego
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen)
         if (newOpen) {
-            setLastMessage('')
+            setLastMessage(state.message || '')
         }
     }
 
@@ -116,7 +116,7 @@ export function AddProductDialog({ categories, projectId }: { categories: Catego
                         </div>
                     </div>
 
-                    {state.message && state.message !== 'Produit créé avec succès' && (
+                    {state.message && !state.message.includes('créé avec succès') && (
                         <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm dark:bg-red-900/20 dark:text-red-400">
                             {state.message}
                         </div>

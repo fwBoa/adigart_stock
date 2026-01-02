@@ -160,7 +160,7 @@ export async function createProduct(prevState: CreateProductState, formData: For
     }
 
     revalidatePath(`/projects/${projectId}`)
-    return { message: 'Produit créé avec succès' }
+    return { message: `Produit "${name}" créé avec succès` }
 }
 
 // --- Project Actions ---
@@ -258,7 +258,7 @@ export async function createCategory(prevState: CategoryState, formData: FormDat
     }
 
     revalidatePath('/')
-    return { message: 'Catégorie créée avec succès' }
+    return { message: `Catégorie "${name}" créée avec succès` }
 }
 
 export async function deleteCategory(categoryId: string) {
@@ -572,7 +572,7 @@ export async function createVariant(
     }
 
     revalidatePath(`/projects/${projectId}`)
-    return { message: 'Variante créée' }
+    return { message: 'Variante créée avec succès' }
 }
 
 export async function deleteVariant(variantId: string, projectId: string) {
