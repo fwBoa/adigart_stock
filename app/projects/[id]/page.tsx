@@ -30,18 +30,20 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     }
 
     // Parallel fetching
-    const [productsResult, categoriesResult] = await Promise.all([
+    const [productsResult, categoriesResult, variantsResult] = await Promise.all([
         supabase
             .from('products')
             .select('*')
             .eq('project_id', id)
             .order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').order('name', { ascending: true })
+        supabase.from('categories').select('*').order('name', { ascending: true }),
+        supabase.from('product_variants').select('*, products!inner(project_id)').eq('products.project_id', id)
     ])
 
     const products = productsResult.data
     const productError = productsResult.error
     const categories = categoriesResult.data || []
+    const variants = variantsResult.data || []
 
     // Calculate stats
     const totalValue = products?.reduce((sum, p) => sum + (p.price * p.stock), 0) || 0
@@ -116,7 +118,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     </div>
                 </div>
             ) : (
-                <ProductFilters products={products} categories={categories} projectId={project.id} />
+                <ProductFilters products={products} categories={categories} variants={variants} projectId={project.id} />
             )}
         </main>
     )

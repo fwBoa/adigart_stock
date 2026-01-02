@@ -1,17 +1,27 @@
 'use client'
 
 import { useState, useActionState, useTransition } from 'react'
-import { processTransaction, TransactionState, deleteProduct } from '@/app/actions'
+import { processTransaction, TransactionState, deleteProduct, deleteVariant } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, Gift, Minus, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Gift, Minus, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { RestockDialog } from '@/components/restock-dialog'
 import { EditProductDialog } from '@/components/edit-product-dialog'
 import { SaleDialog } from '@/components/sale-dialog'
+import { AddVariantDialog } from '@/components/add-variant-dialog'
 
 type Category = {
     id: string
     name: string
+}
+
+type Variant = {
+    id: string
+    product_id: string
+    size: string | null
+    color: string | null
+    stock: number
+    sku: string | null
 }
 
 type Product = {
@@ -33,11 +43,13 @@ interface ProductRowProps {
     product: Product
     projectId: string
     categories: Category[]
+    variants: Variant[]
 }
 
 // Mobile Card Component
-export function ProductCard({ product, projectId, categories }: ProductRowProps) {
+export function ProductCard({ product, projectId, categories, variants }: ProductRowProps) {
     const [qty, setQty] = useState(1)
+    const [showVariants, setShowVariants] = useState(false)
     const [isPendingDelete, startDeleteTransition] = useTransition()
 
     const handleDelete = () => {
@@ -47,6 +59,10 @@ export function ProductCard({ product, projectId, categories }: ProductRowProps)
             })
         }
     }
+
+    const totalStock = variants.length > 0
+        ? variants.reduce((sum, v) => sum + v.stock, 0)
+        : product.stock
 
     const incrementQty = () => setQty(prev => Math.min(prev + 1, product.stock))
     const decrementQty = () => setQty(prev => Math.max(prev - 1, 1))
@@ -163,7 +179,7 @@ export function ProductCard({ product, projectId, categories }: ProductRowProps)
 }
 
 // Desktop Table Row Component
-export function ProductTableRow({ product, projectId, categories }: ProductRowProps) {
+export function ProductTableRow({ product, projectId, categories, variants }: ProductRowProps) {
     const [qty, setQty] = useState(1)
     const [isPendingDelete, startDeleteTransition] = useTransition()
 
@@ -175,7 +191,11 @@ export function ProductTableRow({ product, projectId, categories }: ProductRowPr
         }
     }
 
-    const incrementQty = () => setQty(prev => Math.min(prev + 1, product.stock))
+    const totalStock = variants.length > 0
+        ? variants.reduce((sum, v) => sum + v.stock, 0)
+        : product.stock
+
+    const incrementQty = () => setQty(prev => Math.min(prev + 1, totalStock))
     const decrementQty = () => setQty(prev => Math.max(prev - 1, 1))
 
     return (

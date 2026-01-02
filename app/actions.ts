@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 const TransactionSchema = z.object({
     productId: z.string().uuid(),
+    variantId: z.string().uuid().optional(),
     type: z.enum(['SALE', 'GIFT']),
     paymentMethod: z.enum(['CASH', 'CARD']).optional(),
     quantity: z.number().int().positive(),
@@ -25,6 +26,7 @@ export type TransactionState = {
     message: string
     errors?: {
         productId?: string[]
+        variantId?: string[]
         type?: string[]
         paymentMethod?: string[]
         quantity?: string[]
@@ -35,6 +37,7 @@ export type TransactionState = {
 export async function processTransaction(prevState: TransactionState, formData: FormData) {
     const validatedFields = TransactionSchema.safeParse({
         productId: formData.get('productId'),
+        variantId: formData.get('variantId') || undefined,
         type: formData.get('type'),
         paymentMethod: formData.get('paymentMethod') || undefined,
         quantity: Number(formData.get('quantity')),
@@ -48,13 +51,14 @@ export async function processTransaction(prevState: TransactionState, formData: 
         }
     }
 
-    const { productId, type, paymentMethod, quantity, amount } = validatedFields.data
+    const { productId, variantId, type, paymentMethod, quantity, amount } = validatedFields.data
 
     const supabase = await createClient()
 
     // Use atomic PostgreSQL function to prevent race conditions
     const { data, error } = await supabase.rpc('process_transaction', {
         p_product_id: productId,
+        p_variant_id: variantId || null,
         p_type: type,
         p_payment_method: type === 'SALE' ? (paymentMethod || 'CASH') : null,
         p_quantity: quantity,
@@ -506,4 +510,95 @@ export async function updateProduct(prevState: UpdateProductState, formData: For
 
     revalidatePath(`/projects/${projectId}`)
     return { message: 'Produit mis à jour' }
+}
+
+// --- Variant Actions ---
+
+export async function createVariant(
+    productId: string,
+    projectId: string,
+    data: { size?: string; color?: string; stock: number; sku?: string }
+) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { message: 'Non autorisé' }
+    }
+
+    try {
+        const { error } = await supabase
+            .from('product_variants')
+            .insert({
+                product_id: productId,
+                size: data.size || null,
+                color: data.color || null,
+                stock: data.stock,
+                sku: data.sku || null,
+            })
+
+        if (error) throw error
+    } catch (error) {
+        console.error('Create Variant error:', error)
+        return { message: 'Erreur lors de la création de la variante' }
+    }
+
+    revalidatePath(`/projects/${projectId}`)
+    return { message: 'Variante créée' }
+}
+
+export async function deleteVariant(variantId: string, projectId: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { message: 'Non autorisé' }
+    }
+
+    try {
+        const { error } = await supabase
+            .from('product_variants')
+            .delete()
+            .eq('id', variantId)
+
+        if (error) throw error
+    } catch (error) {
+        console.error('Delete Variant error:', error)
+        return { message: 'Erreur lors de la suppression' }
+    }
+
+    revalidatePath(`/projects/${projectId}`)
+    return { message: 'Variante supprimée' }
+}
+
+export async function restockVariant(variantId: string, projectId: string, quantity: number) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { message: 'Non autorisé' }
+    }
+
+    try {
+        const { data: variant, error: fetchError } = await supabase
+            .from('product_variants')
+            .select('stock')
+            .eq('id', variantId)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        const { error } = await supabase
+            .from('product_variants')
+            .update({ stock: variant.stock + quantity })
+            .eq('id', variantId)
+
+        if (error) throw error
+    } catch (error) {
+        console.error('Restock Variant error:', error)
+        return { message: 'Erreur lors du réappro' }
+    }
+
+    revalidatePath(`/projects/${projectId}`)
+    return { message: 'Stock mis à jour' }
 }

@@ -28,13 +28,23 @@ type Category = {
     name: string
 }
 
+type Variant = {
+    id: string
+    product_id: string
+    size: string | null
+    color: string | null
+    stock: number
+    sku: string | null
+}
+
 interface ProductFiltersProps {
     products: Product[]
     categories: Category[]
+    variants: Variant[]
     projectId: string
 }
 
-export function ProductFilters({ products, categories, projectId }: ProductFiltersProps) {
+export function ProductFilters({ products, categories, variants, projectId }: ProductFiltersProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [stockFilter, setStockFilter] = useState<string>('all')
@@ -143,7 +153,7 @@ export function ProductFilters({ products, categories, projectId }: ProductFilte
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} projectId={projectId} categories={categories} />
+                            <ProductCard key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} />
                         ))}
                     </div>
 
@@ -162,7 +172,7 @@ export function ProductFilters({ products, categories, projectId }: ProductFilte
                                 </thead>
                                 <tbody className="divide-y">
                                     {filteredProducts.map((product) => (
-                                        <ProductTableRow key={product.id} product={product} projectId={projectId} categories={categories} />
+                                        <ProductTableRow key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} />
                                     ))}
                                 </tbody>
                             </table>
