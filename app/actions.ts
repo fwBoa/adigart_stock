@@ -382,26 +382,56 @@ export async function toggleProjectArchive(projectId: string, archived: boolean)
 export async function deleteProject(projectId: string) {
     const supabase = await createClient()
 
+    // Check user is authenticated
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { message: 'Non autorisé' }
+    }
+
     try {
-        // Delete all related transactions first
-        const { data: products } = await supabase
+        // Get all products for this project
+        const { data: products, error: productsError } = await supabase
             .from('products')
             .select('id')
             .eq('project_id', projectId)
 
-        if (products) {
-            for (const product of products) {
-                await supabase.from('transactions').delete().eq('product_id', product.id)
+        if (productsError) {
+            console.error('Error fetching products:', productsError)
+        }
+
+        // Delete all related transactions first
+        if (products && products.length > 0) {
+            const productIds = products.map(p => p.id)
+            const { error: txError } = await supabase
+                .from('transactions')
+                .delete()
+                .in('product_id', productIds)
+
+            if (txError) {
+                console.error('Error deleting transactions:', txError)
             }
         }
 
         // Delete all products
-        await supabase.from('products').delete().eq('project_id', projectId)
+        const { error: delProductsError } = await supabase
+            .from('products')
+            .delete()
+            .eq('project_id', projectId)
+
+        if (delProductsError) {
+            console.error('Error deleting products:', delProductsError)
+        }
 
         // Delete the project
-        const { error } = await supabase.from('projects').delete().eq('id', projectId)
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', projectId)
 
-        if (error) throw error
+        if (error) {
+            console.error('Error deleting project:', error)
+            throw error
+        }
     } catch (error) {
         console.error('Delete Project error:', error)
         return { message: 'Erreur lors de la suppression du projet' }
