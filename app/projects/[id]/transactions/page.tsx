@@ -36,6 +36,11 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
         id,
         name,
         project_id
+      ),
+      product_variants (
+        id,
+        size,
+        color
       )
     `)
         .eq('products.project_id', id)
@@ -143,7 +148,16 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                                                 minute: '2-digit'
                                             })}
                                         </td>
-                                        <td className="p-4 font-medium">{transaction.products?.name}</td>
+                                        <td className="p-4 font-medium">
+                                            <div>{transaction.products?.name}</div>
+                                            {transaction.product_variants && (
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    {transaction.product_variants.size || ''}
+                                                    {transaction.product_variants.size && transaction.product_variants.color ? ' / ' : ''}
+                                                    {transaction.product_variants.color || ''}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${transaction.type === 'SALE'
                                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'

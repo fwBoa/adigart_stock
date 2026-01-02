@@ -34,6 +34,11 @@ export async function GET(
         name,
         sku,
         project_id
+      ),
+      product_variants (
+        size,
+        color,
+        sku
       )
     `)
         .eq('products.project_id', id)
@@ -43,12 +48,22 @@ export async function GET(
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Helper to format variant
+    const formatVariant = (v: any) => {
+        if (!v) return ''
+        const parts = []
+        if (v.size) parts.push(v.size)
+        if (v.color) parts.push(v.color)
+        return parts.join(' / ')
+    }
+
     // Generate CSV
-    const headers = ['Date', 'Produit', 'SKU', 'Type', 'Quantité', 'Montant (€)']
+    const headers = ['Date', 'Produit', 'Variante', 'SKU', 'Type', 'Quantité', 'Montant (€)']
     const rows = transactions?.map(t => [
         new Date(t.created_at).toLocaleString('fr-FR'),
         t.products?.name || '',
-        t.products?.sku || '',
+        formatVariant(t.product_variants),
+        t.product_variants?.sku || t.products?.sku || '',
         t.type === 'SALE' ? 'Vente' : 'Don',
         t.quantity.toString(),
         Number(t.amount).toFixed(2)
