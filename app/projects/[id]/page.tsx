@@ -74,6 +74,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
     return (
         <main className="container mx-auto px-4 py-6 md:py-10">
+            {/* Debug Info (Temporary) */}
+            <div className="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded text-xs font-mono overflow-auto max-h-40">
+                <p>DEBUG: Products found: {products?.length || 0}</p>
+                <p>DEBUG: Variants fetch count: {variants?.length || 0}</p>
+                <p>DEBUG: First variant sample: {variants && variants.length > 0 ? JSON.stringify(variants[0]) : 'None'}</p>
+            </div>
+
             {/* Header */}
             <div className="mb-6 md:mb-8">
                 <Link href="/">
