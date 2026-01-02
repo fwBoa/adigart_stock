@@ -276,7 +276,8 @@ export async function deleteCategory(categoryId: string) {
         return { message: 'Erreur lors de la suppression' }
     }
 
-    revalidatePath('/')
+    revalidatePath('/categories')
+    revalidatePath('/', 'layout')
     return { message: 'Catégorie supprimée' }
 }
 
@@ -363,6 +364,7 @@ export async function deleteProduct(productId: string, projectId: string) {
     }
 
     revalidatePath(`/projects/${projectId}`)
+    revalidatePath('/', 'layout')
     return { message: 'Produit supprimé' }
 }
 
