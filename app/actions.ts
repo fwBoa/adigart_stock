@@ -74,7 +74,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
         return { message: data.error || 'Erreur inconnue' }
     }
 
-    revalidatePath('/projects')
+    revalidatePath('/', 'layout')
     return { message: 'Transaction successful' }
 }
 
