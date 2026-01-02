@@ -25,7 +25,7 @@ function CategoryItem({ category }: { category: Category }) {
     const [isPending, startTransition] = useTransition()
 
     const handleDelete = () => {
-        if (confirm(`Supprimer la catégorie "${category.name}" ?`)) {
+        if (confirm(`⚠️ Supprimer la catégorie "${category.name}" ?\n\nLes produits dans cette catégorie ne seront pas supprimés, mais n'auront plus de catégorie.`)) {
             startTransition(async () => {
                 await deleteCategory(category.id)
             })

@@ -41,7 +41,7 @@ export function ProductCard({ product, projectId, categories }: ProductRowProps)
     const [isPendingDelete, startDeleteTransition] = useTransition()
 
     const handleDelete = () => {
-        if (confirm(`Supprimer "${product.name}" et toutes ses transactions ?`)) {
+        if (confirm(`⚠️ Supprimer "${product.name}" ?\n\nToutes les transactions (ventes et dons) liées à ce produit seront également supprimées.\n\nCette action est irréversible.`)) {
             startDeleteTransition(async () => {
                 await deleteProduct(product.id, projectId)
             })
@@ -168,7 +168,7 @@ export function ProductTableRow({ product, projectId, categories }: ProductRowPr
     const [isPendingDelete, startDeleteTransition] = useTransition()
 
     const handleDelete = () => {
-        if (confirm(`Supprimer "${product.name}" et toutes ses transactions ?`)) {
+        if (confirm(`⚠️ Supprimer "${product.name}" ?\n\nToutes les transactions (ventes et dons) liées à ce produit seront également supprimées.\n\nCette action est irréversible.`)) {
             startDeleteTransition(async () => {
                 await deleteProduct(product.id, projectId)
             })
