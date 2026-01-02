@@ -51,6 +51,8 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
 
     // Calculate stats
     const totalSales = transactions?.filter(t => t.type === 'SALE').reduce((sum, t) => sum + Number(t.amount), 0) || 0
+    const cashTotal = transactions?.filter(t => t.type === 'SALE' && t.payment_method === 'CASH').reduce((sum, t) => sum + Number(t.amount), 0) || 0
+    const cardTotal = transactions?.filter(t => t.type === 'SALE' && t.payment_method === 'CARD').reduce((sum, t) => sum + Number(t.amount), 0) || 0
     const salesCount = transactions?.filter(t => t.type === 'SALE').length || 0
     const giftsCount = transactions?.filter(t => t.type === 'GIFT').length || 0
     const totalItems = transactions?.reduce((sum, t) => sum + t.quantity, 0) || 0
@@ -83,10 +85,18 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                 <div className="bg-card border rounded-lg p-4">
                     <p className="text-sm text-muted-foreground">Chiffre d'Affaires</p>
                     <p className="text-2xl font-bold text-green-600">{totalSales.toFixed(2)} €</p>
+                </div>
+                <div className="bg-card border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">💵 Espèces</p>
+                    <p className="text-2xl font-bold text-amber-600">{cashTotal.toFixed(2)} €</p>
+                </div>
+                <div className="bg-card border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">💳 Carte</p>
+                    <p className="text-2xl font-bold text-purple-600">{cardTotal.toFixed(2)} €</p>
                 </div>
                 <div className="bg-card border rounded-lg p-4">
                     <p className="text-sm text-muted-foreground">Ventes</p>
@@ -149,8 +159,8 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                                         <td className="p-4">
                                             {transaction.type === 'SALE' && transaction.payment_method && (
                                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${transaction.payment_method === 'CASH'
-                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                                                     }`}>
                                                     {transaction.payment_method === 'CASH' ? 'Espèces' : 'Carte'}
                                                 </span>
