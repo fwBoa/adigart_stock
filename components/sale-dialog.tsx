@@ -12,7 +12,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Loader2, ShoppingCart, Banknote, CreditCard } from 'lucide-react'
+import { Loader2, ShoppingCart, Banknote, CreditCard, Gift } from 'lucide-react'
 
 const initialState: TransactionState = {
     message: '',
@@ -35,9 +35,10 @@ interface SaleDialogProps {
     amount: number
     disabled: boolean
     variants?: Variant[]
+    type?: 'SALE' | 'GIFT'
 }
 
-export function SaleDialog({ productId, productName, quantity, amount, disabled, variants = [] }: SaleDialogProps) {
+export function SaleDialog({ productId, productName, quantity, amount, disabled, variants = [], type = 'SALE' }: SaleDialogProps) {
     const [open, setOpen] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
@@ -70,34 +71,36 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
         return parts.length > 0 ? parts.join(' / ') : (v.sku || 'Variante')
     }
 
+    const isGift = type === 'GIFT'
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button
-                    variant="default"
+                    variant={isGift ? "secondary" : "default"}
                     size="sm"
                     disabled={disabled && !hasVariants}
                     className="flex-1 h-10"
                 >
-                    <ShoppingCart className="h-4 w-4 mr-1.5" />
-                    Vendre
+                    {isGift ? <Gift className="h-4 w-4 mr-1.5" /> : <ShoppingCart className="h-4 w-4 mr-1.5" />}
+                    {isGift ? "Don" : "Vendre"}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[400px]">
                 <DialogHeader>
-                    <DialogTitle>Confirmer la vente</DialogTitle>
+                    <DialogTitle>{isGift ? "Confirmer le don" : "Confirmer la vente"}</DialogTitle>
                     <DialogDescription>
-                        {quantity}x {productName} — {amount.toFixed(2)} €
+                        {quantity}x {productName} {isGift ? "(Gratuit)" : `— ${amount.toFixed(2)} €`}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form action={action} className="space-y-4">
                     <input type="hidden" name="productId" value={productId} />
                     <input type="hidden" name="variantId" value={selectedVariantId || ''} />
-                    <input type="hidden" name="type" value="SALE" />
+                    <input type="hidden" name="type" value={type} />
                     <input type="hidden" name="quantity" value={quantity} />
                     <input type="hidden" name="amount" value={amount} />
-                    <input type="hidden" name="paymentMethod" value={paymentMethod} />
+                    {!isGift && <input type="hidden" name="paymentMethod" value={paymentMethod} />}
 
                     {/* Variant Selection */}
                     {hasVariants && (
@@ -111,10 +114,10 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
                                         onClick={() => setSelectedVariantId(v.id)}
                                         disabled={v.stock < quantity}
                                         className={`p-2 rounded-lg border text-left text-sm transition-all ${selectedVariantId === v.id
-                                                ? 'border-primary bg-primary/10'
-                                                : v.stock < quantity
-                                                    ? 'border-muted opacity-50 cursor-not-allowed'
-                                                    : 'border-muted hover:border-primary/50'
+                                            ? 'border-primary bg-primary/10'
+                                            : v.stock < quantity
+                                                ? 'border-muted opacity-50 cursor-not-allowed'
+                                                : 'border-muted hover:border-primary/50'
                                             }`}
                                     >
                                         <div className="font-medium truncate">{formatVariantLabel(v)}</div>
@@ -127,35 +130,37 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
                         </div>
                     )}
 
-                    {/* Payment Method Selection */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setPaymentMethod('CASH')}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'CASH'
+                    {/* Payment Method Selection (Only for SALE) */}
+                    {!isGift && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMethod('CASH')}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'CASH'
                                     ? 'border-primary bg-primary/10'
                                     : 'border-muted hover:border-primary/50'
-                                }`}
-                        >
-                            <Banknote className={`h-8 w-8 ${paymentMethod === 'CASH' ? 'text-primary' : 'text-muted-foreground'}`} />
-                            <span className={`font-medium ${paymentMethod === 'CASH' ? 'text-primary' : 'text-muted-foreground'}`}>
-                                Espèces
-                            </span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setPaymentMethod('CARD')}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'CARD'
+                                    }`}
+                            >
+                                <Banknote className={`h-8 w-8 ${paymentMethod === 'CASH' ? 'text-primary' : 'text-muted-foreground'}`} />
+                                <span className={`font-medium ${paymentMethod === 'CASH' ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    Espèces
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMethod('CARD')}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'CARD'
                                     ? 'border-primary bg-primary/10'
                                     : 'border-muted hover:border-primary/50'
-                                }`}
-                        >
-                            <CreditCard className={`h-8 w-8 ${paymentMethod === 'CARD' ? 'text-primary' : 'text-muted-foreground'}`} />
-                            <span className={`font-medium ${paymentMethod === 'CARD' ? 'text-primary' : 'text-muted-foreground'}`}>
-                                Carte
-                            </span>
-                        </button>
-                    </div>
+                                    }`}
+                            >
+                                <CreditCard className={`h-8 w-8 ${paymentMethod === 'CARD' ? 'text-primary' : 'text-muted-foreground'}`} />
+                                <span className={`font-medium ${paymentMethod === 'CARD' ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    Carte
+                                </span>
+                            </button>
+                        </div>
+                    )}
 
                     {state.message && state.message !== 'Transaction successful' && (
                         <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm dark:bg-red-900/20 dark:text-red-400">
@@ -169,7 +174,7 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
                         </Button>
                         <Button type="submit" disabled={isPending || (hasVariants && !canSell)}>
                             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Valider ({amount.toFixed(2)} €)
+                            {isGift ? "Confirmer le don" : `Valider (${amount.toFixed(2)} €)`}
                         </Button>
                     </DialogFooter>
                 </form>

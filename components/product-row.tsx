@@ -188,16 +188,14 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                         disabled={totalStock === 0}
                         variants={variants}
                     />
-                    <TransactionButton
+                    <SaleDialog
                         productId={product.id}
-                        type="GIFT"
+                        productName={product.name}
                         quantity={qty}
                         amount={0}
                         disabled={totalStock === 0}
-                        label="Don"
-                        icon={<Gift className="h-4 w-4" />}
-                        variant="secondary"
-                        className="h-10 px-3"
+                        variants={variants}
+                        type="GIFT"
                     />
                 </div>
             </div>
@@ -311,9 +309,9 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                         <Input
                             type="number"
                             min="1"
-                            max={product.stock}
+                            max={totalStock}
                             value={qty}
-                            onChange={(e) => setQty(Math.min(Number(e.target.value), product.stock))}
+                            onChange={(e) => setQty(Math.min(Number(e.target.value), totalStock))}
                             className="w-12 h-8 text-center border-0 focus-visible:ring-0"
                         />
                         <Button
@@ -322,7 +320,7 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={incrementQty}
-                            disabled={qty >= product.stock}
+                            disabled={qty >= totalStock}
                         >
                             <Plus className="h-3 w-3" />
                         </Button>
@@ -334,17 +332,17 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                         productName={product.name}
                         quantity={qty}
                         amount={product.price * qty}
-                        disabled={product.stock === 0}
+                        disabled={totalStock === 0}
+                        variants={variants}
                     />
-                    <TransactionButton
+                    <SaleDialog
                         productId={product.id}
-                        type="GIFT"
+                        productName={product.name}
                         quantity={qty}
                         amount={0}
-                        disabled={product.stock === 0}
-                        label="Don"
-                        icon={<Gift className="h-4 w-4" />}
-                        variant="secondary"
+                        disabled={totalStock === 0}
+                        variants={variants}
+                        type="GIFT"
                     />
                 </div>
             </td>
@@ -352,55 +350,4 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
     )
 }
 
-// Sub-component for transaction buttons
-function TransactionButton({
-    productId,
-    type,
-    quantity,
-    amount,
-    disabled,
-    label,
-    icon,
-    variant,
-    className = ""
-}: {
-    productId: string
-    type: 'SALE' | 'GIFT'
-    quantity: number
-    amount: number
-    disabled: boolean
-    label: string
-    icon: React.ReactNode
-    variant: 'default' | 'secondary'
-    className?: string
-}) {
-    const [state, action, isPending] = useActionState(processTransaction, initialState)
 
-    return (
-        <form action={action}>
-            <input type="hidden" name="productId" value={productId} />
-            <input type="hidden" name="type" value={type} />
-            <input type="hidden" name="quantity" value={quantity} />
-            <input type="hidden" name="amount" value={amount} />
-            <Button
-                type="submit"
-                variant={variant}
-                size="sm"
-                disabled={disabled || isPending}
-                className={className}
-            >
-                {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                    <>
-                        {icon}
-                        <span className="ml-1.5">{label}</span>
-                    </>
-                )}
-            </Button>
-            {state.message && state.message !== 'Transaction successful' && (
-                <span className="sr-only text-red-500">{state.message}</span>
-            )}
-        </form>
-    )
-}
