@@ -1,16 +1,18 @@
 'use client'
 
-import { deleteProject, toggleProjectArchive } from '@/app/actions'
+import { toggleProjectArchive } from '@/app/actions'
 import { Button } from '@/components/ui/button'
-import { Trash2, Archive, ArchiveRestore } from 'lucide-react'
+import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { useTransition } from 'react'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from 'lucide-react'
+import { DeleteProjectDialog } from '@/components/delete-project-dialog'
 
 type ProjectActionsProps = {
     projectId: string
@@ -25,14 +27,6 @@ export function ProjectActions({ projectId, projectName, isArchived }: ProjectAc
         startTransition(async () => {
             await toggleProjectArchive(projectId, !isArchived)
         })
-    }
-
-    const handleDelete = () => {
-        if (confirm(`Supprimer définitivement le projet "${projectName}" ?\n\nCette action supprimera également tous les produits et transactions associés.`)) {
-            startTransition(async () => {
-                await deleteProject(projectId)
-            })
-        }
     }
 
     return (
@@ -50,9 +44,19 @@ export function ProjectActions({ projectId, projectName, isArchived }: ProjectAc
                         <><Archive className="h-4 w-4 mr-2" /> Archiver</>
                     )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" /> Supprimer
-                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DeleteProjectDialog
+                    projectId={projectId}
+                    projectName={projectName}
+                    trigger={
+                        <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className="text-destructive focus:text-destructive cursor-pointer"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" /> Supprimer
+                        </DropdownMenuItem>
+                    }
+                />
             </DropdownMenuContent>
         </DropdownMenu>
     )
