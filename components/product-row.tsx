@@ -64,11 +64,11 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
         ? variants.reduce((sum, v) => sum + v.stock, 0)
         : product.stock
 
-    const incrementQty = () => setQty(prev => Math.min(prev + 1, product.stock))
+    const incrementQty = () => setQty(prev => Math.min(prev + 1, totalStock))
     const decrementQty = () => setQty(prev => Math.max(prev - 1, 1))
 
     return (
-        <div className="border rounded-lg p-4 bg-card transition-all hover:shadow-md" data-low-stock={product.stock <= 5}>
+        <div className="border rounded-lg p-4 bg-card transition-all hover:shadow-md" data-low-stock={totalStock <= 5}>
             {/* Header: Image + Name + Actions */}
             <div className="flex items-start gap-3 mb-3">
                 {product.image_url ? (
@@ -87,6 +87,7 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     {product.sku && <p className="text-xs text-muted-foreground">{product.sku}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} />
                     <EditProductDialog product={product} categories={categories} projectId={projectId} />
                     <Button
                         variant="ghost"
@@ -100,21 +101,44 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                 </div>
             </div>
 
+            {/* Variants Display */}
+            {variants.length > 0 && (
+                <div className="mb-3">
+                    <button
+                        onClick={() => setShowVariants(!showVariants)}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                        {showVariants ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        {variants.length} variante{variants.length > 1 ? 's' : ''}
+                    </button>
+                    {showVariants && (
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                            {variants.map(v => (
+                                <div key={v.id} className="text-xs px-2 py-1 bg-muted rounded flex justify-between">
+                                    <span className="truncate">{v.size || ''}{v.size && v.color ? ' / ' : ''}{v.color || ''}</span>
+                                    <span className={v.stock <= 5 ? 'text-orange-600 font-medium' : ''}>{v.stock}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Price & Stock Row */}
             <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-lg font-bold">{product.price.toFixed(2)} €</span>
                 <div className="flex items-center gap-2">
                     <span
-                        className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-sm font-medium ${product.stock <= 5
-                            ? product.stock === 0
+                        className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-sm font-medium ${totalStock <= 5
+                            ? totalStock === 0
                                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                 : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                             : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             }`}
                     >
-                        {product.stock} en stock
+                        {totalStock} en stock
                     </span>
-                    <RestockDialog product={product} />
+                    {variants.length === 0 && <RestockDialog product={product} />}
                 </div>
             </div>
 
@@ -135,9 +159,9 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     <Input
                         type="number"
                         min="1"
-                        max={product.stock}
+                        max={totalStock}
                         value={qty}
-                        onChange={(e) => setQty(Math.min(Number(e.target.value), product.stock))}
+                        onChange={(e) => setQty(Math.min(Number(e.target.value), totalStock))}
                         className="w-14 h-10 text-center border-0 focus-visible:ring-0 text-lg font-medium"
                     />
                     <Button
@@ -146,7 +170,7 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                         size="sm"
                         className="h-10 w-10 p-0"
                         onClick={incrementQty}
-                        disabled={qty >= product.stock}
+                        disabled={qty >= totalStock}
                     >
                         <Plus className="h-4 w-4" />
                     </Button>
@@ -159,14 +183,15 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                         productName={product.name}
                         quantity={qty}
                         amount={product.price * qty}
-                        disabled={product.stock === 0}
+                        disabled={totalStock === 0}
+                        variants={variants}
                     />
                     <TransactionButton
                         productId={product.id}
                         type="GIFT"
                         quantity={qty}
                         amount={0}
-                        disabled={product.stock === 0}
+                        disabled={totalStock === 0}
                         label="Don"
                         icon={<Gift className="h-4 w-4" />}
                         variant="secondary"
