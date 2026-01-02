@@ -29,21 +29,33 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         notFound()
     }
 
-    // Parallel fetching
-    const [productsResult, categoriesResult, variantsResult] = await Promise.all([
+    // Parallel fetching for products and categories
+    const [productsResult, categoriesResult] = await Promise.all([
         supabase
             .from('products')
             .select('*')
             .eq('project_id', id)
             .order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').order('name', { ascending: true }),
-        supabase.from('product_variants').select('*, products!inner(project_id)').eq('products.project_id', id)
+        supabase.from('categories').select('*').order('name', { ascending: true })
     ])
 
     const products = productsResult.data
     const productError = productsResult.error
     const categories = categoriesResult.data || []
-    const variants = variantsResult.data || []
+
+    // Fetch variants for these products
+    let variants: any[] = []
+    if (products && products.length > 0) {
+        const productIds = products.map(p => p.id)
+        const { data } = await supabase
+            .from('product_variants')
+            .select('*')
+            .in('product_id', productIds)
+
+        if (data) {
+            variants = data
+        }
+    }
 
     // Calculate stats
     const totalValue = products?.reduce((sum, p) => sum + (p.price * p.stock), 0) || 0
