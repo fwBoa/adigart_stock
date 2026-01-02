@@ -99,6 +99,20 @@ export function AddProductDialog({ categories, projectId }: { categories: Catego
                     </div>
 
                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="image" className="text-right">Image</Label>
+                        <div className="col-span-3">
+                            <Input
+                                id="image"
+                                name="image"
+                                type="file"
+                                accept="image/*"
+                                className="cursor-pointer"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Max 2 Mo (optionnel)</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="category" className="text-right">Catégorie</Label>
                         <div className="col-span-3">
                             <Select name="categoryId">
