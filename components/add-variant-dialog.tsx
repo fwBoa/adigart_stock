@@ -20,18 +20,30 @@ interface AddVariantDialogProps {
     productId: string
     productName: string
     projectId: string
+    productStock: number
+    currentVariantsTotal: number
 }
 
-export function AddVariantDialog({ productId, productName, projectId }: AddVariantDialogProps) {
+export function AddVariantDialog({ productId, productName, projectId, productStock, currentVariantsTotal }: AddVariantDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
     const [size, setSize] = useState('')
     const [color, setColor] = useState('')
     const [stock, setStock] = useState(0)
     const [sku, setSku] = useState('')
+    const [error, setError] = useState('')
+
+    const remainingStock = productStock - currentVariantsTotal
+    const maxStock = Math.max(0, remainingStock)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
+        setError('')
+
+        if (stock > remainingStock) {
+            setError(`Maximum disponible: ${remainingStock}`)
+            return
+        }
 
         startTransition(async () => {
             const result = await createVariant(productId, projectId, {
@@ -47,14 +59,25 @@ export function AddVariantDialog({ productId, productName, projectId }: AddVaria
                 setColor('')
                 setStock(0)
                 setSku('')
+                setError('')
+            } else {
+                setError(result.message || 'Erreur')
             }
         })
     }
 
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen)
+        if (newOpen) {
+            setError('')
+            setStock(0)
+        }
+    }
+
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
+                <Button variant="outline" size="sm" className="h-8" disabled={remainingStock <= 0}>
                     <Plus className="h-3 w-3 mr-1" />
                     Variante
                 </Button>
@@ -63,7 +86,7 @@ export function AddVariantDialog({ productId, productName, projectId }: AddVaria
                 <DialogHeader>
                     <DialogTitle>Ajouter une variante</DialogTitle>
                     <DialogDescription>
-                        {productName}
+                        {productName} — Stock restant à répartir: <strong>{remainingStock}</strong>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -91,13 +114,14 @@ export function AddVariantDialog({ productId, productName, projectId }: AddVaria
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="stock">Stock *</Label>
+                            <Label htmlFor="stock">Stock * (max: {maxStock})</Label>
                             <Input
                                 id="stock"
                                 type="number"
                                 min="0"
+                                max={maxStock}
                                 value={stock}
-                                onChange={(e) => setStock(Number(e.target.value))}
+                                onChange={(e) => setStock(Math.min(Number(e.target.value), maxStock))}
                                 required
                             />
                         </div>
@@ -112,11 +136,17 @@ export function AddVariantDialog({ productId, productName, projectId }: AddVaria
                         </div>
                     </div>
 
+                    {error && (
+                        <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm dark:bg-red-900/20 dark:text-red-400">
+                            {error}
+                        </div>
+                    )}
+
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Annuler
                         </Button>
-                        <Button type="submit" disabled={isPending || stock < 0}>
+                        <Button type="submit" disabled={isPending || stock <= 0 || stock > maxStock}>
                             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Ajouter
                         </Button>

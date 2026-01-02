@@ -529,6 +529,32 @@ export async function createVariant(
     }
 
     try {
+        // Get product stock limit
+        const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('stock')
+            .eq('id', productId)
+            .single()
+
+        if (productError || !product) {
+            return { message: 'Produit non trouvé' }
+        }
+
+        // Get current total of variant stocks
+        const { data: existingVariants } = await supabase
+            .from('product_variants')
+            .select('stock')
+            .eq('product_id', productId)
+
+        const currentVariantsTotal = existingVariants?.reduce((sum, v) => sum + v.stock, 0) || 0
+        const newTotal = currentVariantsTotal + data.stock
+
+        // Check if new total exceeds product stock
+        if (newTotal > product.stock) {
+            const remaining = product.stock - currentVariantsTotal
+            return { message: `Stock insuffisant. Maximum disponible: ${remaining}` }
+        }
+
         const { error } = await supabase
             .from('product_variants')
             .insert({

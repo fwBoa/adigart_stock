@@ -64,6 +64,8 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
         ? variants.reduce((sum, v) => sum + v.stock, 0)
         : product.stock
 
+    const currentVariantsTotal = variants.reduce((sum, v) => sum + v.stock, 0)
+
     const incrementQty = () => setQty(prev => Math.min(prev + 1, totalStock))
     const decrementQty = () => setQty(prev => Math.max(prev - 1, 1))
 
@@ -87,7 +89,7 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     {product.sku && <p className="text-xs text-muted-foreground">{product.sku}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} />
+                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
                     <EditProductDialog product={product} categories={categories} projectId={projectId} />
                     <Button
                         variant="ghost"
