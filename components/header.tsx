@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/logout-button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { Tag } from 'lucide-react'
 
 export async function Header() {
     const supabase = await createClient()
@@ -21,7 +22,7 @@ export async function Header() {
                     </span>
                 </Link>
 
-                {/* Navigation */}
+                {/* Navigation Desktop */}
                 {user && (
                     <nav className="ml-6 hidden sm:flex items-center gap-4">
                         <Link
@@ -31,6 +32,17 @@ export async function Header() {
                             Catégories
                         </Link>
                     </nav>
+                )}
+
+                {/* Navigation Mobile */}
+                {user && (
+                    <Link
+                        href="/categories"
+                        className="ml-4 sm:hidden flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Tag className="h-4 w-4" />
+                        <span>Catégories</span>
+                    </Link>
                 )}
 
                 {/* Spacer */}

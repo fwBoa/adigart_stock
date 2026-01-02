@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useEffect } from 'react'
 import { createCategory, CategoryState } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,13 +24,25 @@ const initialState: CategoryState = {
 export function AddCategoryDialog() {
     const [open, setOpen] = useState(false)
     const [state, action, isPending] = useActionState(createCategory, initialState)
+    const [lastMessage, setLastMessage] = useState('')
 
-    if (state.message === 'Catégorie créée avec succès' && open) {
-        setOpen(false)
+    useEffect(() => {
+        if (state.message === 'Catégorie créée avec succès' && state.message !== lastMessage && open) {
+            setOpen(false)
+            setLastMessage(state.message)
+        }
+    }, [state.message, open, lastMessage])
+
+    // Reset lastMessage when dialog opens
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen)
+        if (newOpen) {
+            setLastMessage('')
+        }
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="mr-2 h-4 w-4" /> Nouvelle Catégorie
@@ -58,7 +70,7 @@ export function AddCategoryDialog() {
                     </div>
 
                     {state.message && state.message !== 'Catégorie créée avec succès' && (
-                        <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm">
+                        <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm dark:bg-red-900/20 dark:text-red-400">
                             {state.message}
                         </div>
                     )}
