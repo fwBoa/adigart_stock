@@ -4,14 +4,25 @@ import { LogoutButton } from '@/components/logout-button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Tag, Shield } from 'lucide-react'
 
-async function getUserRole(userId: string) {
-    const supabase = await createClient()
-    const { data } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', userId)
-        .single()
-    return data?.role || null
+async function getUserRole(userId: string): Promise<'admin' | 'seller' | null> {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', userId)
+            .single()
+
+        if (error) {
+            console.error('getUserRole error:', error)
+            return null
+        }
+
+        return data?.role as 'admin' | 'seller' | null
+    } catch (e) {
+        console.error('getUserRole exception:', e)
+        return null
+    }
 }
 
 export async function Header() {
@@ -19,8 +30,13 @@ export async function Header() {
     const { data: { user } } = await supabase.auth.getUser()
 
     // Get user role if logged in
-    const role = user ? await getUserRole(user.id) : null
-    const isAdmin = role === 'admin'
+    let isAdmin = false
+    if (user) {
+        const role = await getUserRole(user.id)
+        isAdmin = role === 'admin'
+        // Debug log
+        console.log('[Header] User:', user.email, 'Role:', role, 'isAdmin:', isAdmin)
+    }
 
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
