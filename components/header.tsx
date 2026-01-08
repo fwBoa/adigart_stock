@@ -59,13 +59,24 @@ export async function Header() {
 
                 {/* Navigation Mobile */}
                 {user && (
-                    <Link
-                        href="/categories"
-                        className="ml-4 sm:hidden flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Tag className="h-4 w-4" />
-                        <span>Catégories</span>
-                    </Link>
+                    <div className="ml-4 sm:hidden flex items-center gap-3">
+                        <Link
+                            href="/categories"
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <Tag className="h-4 w-4" />
+                            <span>Catégories</span>
+                        </Link>
+                        {isAdmin && (
+                            <Link
+                                href="/users"
+                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <Shield className="h-4 w-4" />
+                                <span>Users</span>
+                            </Link>
+                        )}
+                    </div>
                 )}
 
                 {/* Spacer */}
