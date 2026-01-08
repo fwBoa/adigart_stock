@@ -2,11 +2,25 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/logout-button'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Tag } from 'lucide-react'
+import { Tag, Shield } from 'lucide-react'
+
+async function getUserRole(userId: string) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+    return data?.role || null
+}
 
 export async function Header() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Get user role if logged in
+    const role = user ? await getUserRole(user.id) : null
+    const isAdmin = role === 'admin'
 
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,6 +45,15 @@ export async function Header() {
                         >
                             Catégories
                         </Link>
+                        {isAdmin && (
+                            <Link
+                                href="/users"
+                                className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                            >
+                                <Shield className="h-3 w-3" />
+                                Utilisateurs
+                            </Link>
+                        )}
                     </nav>
                 )}
 

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ShoppingCart, Gift, TrendingUp } from 'lucide-react'
+import { ClearHistoryButton } from '@/components/clear-history-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,11 +81,14 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                         <p className="text-muted-foreground mt-1">{transactions?.length || 0} transactions</p>
                     </div>
                     {transactions && transactions.length > 0 && (
-                        <a href={`/api/projects/${id}/export`} download>
-                            <Button variant="outline">
-                                Exporter CSV
-                            </Button>
-                        </a>
+                        <div className="flex gap-2">
+                            <a href={`/api/projects/${id}/export`} download>
+                                <Button variant="outline">
+                                    Exporter CSV
+                                </Button>
+                            </a>
+                            <ClearHistoryButton projectId={id} />
+                        </div>
                     )}
                 </div>
             </div>

@@ -281,6 +281,45 @@ export async function deleteCategory(categoryId: string) {
     return { message: 'Catégorie supprimée' }
 }
 
+// --- Clear Transaction History ---
+export async function clearTransactionHistory(projectId: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { message: 'Non autorisé' }
+    }
+
+    try {
+        // Get all products for this project
+        const { data: products, error: productsError } = await supabase
+            .from('products')
+            .select('id')
+            .eq('project_id', projectId)
+
+        if (productsError) throw productsError
+
+        if (products && products.length > 0) {
+            const productIds = products.map(p => p.id)
+
+            // Delete all transactions for these products
+            const { error } = await supabase
+                .from('transactions')
+                .delete()
+                .in('product_id', productIds)
+
+            if (error) throw error
+        }
+    } catch (error) {
+        console.error('Clear History error:', error)
+        return { message: 'Erreur lors de la suppression de l\'historique' }
+    }
+
+    revalidatePath(`/projects/${projectId}/transactions`)
+    revalidatePath('/', 'layout')
+    return { message: 'Historique vidé avec succès' }
+}
+
 // --- Restock Action ---
 const RestockSchema = z.object({
     productId: z.string().uuid(),
@@ -584,6 +623,38 @@ export async function deleteVariant(variantId: string, projectId: string) {
     }
 
     try {
+        // 1. Get the variant's stock and product_id
+        const { data: variant, error: fetchError } = await supabase
+            .from('product_variants')
+            .select('stock, product_id')
+            .eq('id', variantId)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        // 2. Restore stock to parent product
+        if (variant && variant.stock > 0) {
+            const { error: updateError } = await supabase
+                .from('products')
+                .update({ stock: supabase.rpc('increment', { row_id: variant.product_id, amount: variant.stock }) })
+                .eq('id', variant.product_id)
+
+            // Alternative: Direct increment without RPC
+            const { data: product } = await supabase
+                .from('products')
+                .select('stock')
+                .eq('id', variant.product_id)
+                .single()
+
+            if (product) {
+                await supabase
+                    .from('products')
+                    .update({ stock: product.stock + variant.stock })
+                    .eq('id', variant.product_id)
+            }
+        }
+
+        // 3. Delete the variant
         const { error } = await supabase
             .from('product_variants')
             .delete()
@@ -596,7 +667,7 @@ export async function deleteVariant(variantId: string, projectId: string) {
     }
 
     revalidatePath(`/projects/${projectId}`)
-    return { message: 'Variante supprimée' }
+    return { message: 'Variante supprimée (stock restitué)' }
 }
 
 export async function restockVariant(variantId: string, projectId: string, quantity: number) {

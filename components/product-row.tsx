@@ -116,9 +116,22 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     {showVariants && (
                         <div className="mt-2 grid grid-cols-2 gap-1.5">
                             {variants.map(v => (
-                                <div key={v.id} className="text-xs px-2 py-1 bg-muted rounded flex justify-between">
+                                <div key={v.id} className="text-xs px-2 py-1 bg-muted rounded flex justify-between items-center group">
                                     <span className="truncate">{v.size || ''}{v.size && v.color ? ' / ' : ''}{v.color || ''}</span>
-                                    <span className={v.stock <= 5 ? 'text-orange-600 font-medium' : ''}>{v.stock}</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className={v.stock <= 5 ? 'text-orange-600 font-medium' : ''}>{v.stock}</span>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
+                                                    deleteVariant(v.id, projectId)
+                                                }
+                                            }}
+                                            className="opacity-50 hover:opacity-100 hover:text-destructive transition-opacity"
+                                            title="Supprimer"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -248,9 +261,20 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                         {variants.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1 max-w-[300px]">
                                 {variants.map(v => (
-                                    <span key={v.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/50">
+                                    <span key={v.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/50 group">
                                         {v.size || ''}{v.size && v.color ? '/' : ''}{v.color || ''}
                                         <span className={`ml-1 ${v.stock <= 5 ? 'text-orange-600 font-bold' : 'opacity-70'}`}>({v.stock})</span>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
+                                                    deleteVariant(v.id, projectId)
+                                                }
+                                            }}
+                                            className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                            title="Supprimer cette variante"
+                                        >
+                                            ×
+                                        </button>
                                     </span>
                                 ))}
                             </div>

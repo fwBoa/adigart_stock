@@ -44,6 +44,37 @@ interface ProductFiltersProps {
     projectId: string
 }
 
+// Normalize string for fuzzy matching (removes accents, spaces, hyphens)
+function normalize(str: string): string {
+    return str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .replace(/[-\s_]/g, '')          // Remove spaces, hyphens, underscores
+        .replace(/[^a-z0-9]/g, '')       // Keep only alphanumeric
+}
+
+// Fuzzy match: checks if query is contained in target (normalized)
+function fuzzyMatch(target: string, query: string): boolean {
+    if (!query) return true
+    const normalizedTarget = normalize(target)
+    const normalizedQuery = normalize(query)
+
+    // Direct inclusion
+    if (normalizedTarget.includes(normalizedQuery)) return true
+
+    // Check if all characters of query appear in order in target
+    let queryIndex = 0
+    for (const char of normalizedTarget) {
+        if (char === normalizedQuery[queryIndex]) {
+            queryIndex++
+            if (queryIndex === normalizedQuery.length) return true
+        }
+    }
+
+    return false
+}
+
 export function ProductFilters({ products, categories, variants, projectId }: ProductFiltersProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -51,10 +82,30 @@ export function ProductFilters({ products, categories, variants, projectId }: Pr
 
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
-            // Search filter
-            const matchesSearch = searchQuery === '' ||
-                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (product.sku && product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+            // Get product's variants
+            const productVariants = variants.filter(v => v.product_id === product.id)
+
+            // Search filter (fuzzy + variants)
+            let matchesSearch = searchQuery === ''
+
+            if (!matchesSearch) {
+                // Search in product name
+                matchesSearch = fuzzyMatch(product.name, searchQuery)
+
+                // Search in SKU
+                if (!matchesSearch && product.sku) {
+                    matchesSearch = fuzzyMatch(product.sku, searchQuery)
+                }
+
+                // Search in variant size/color
+                if (!matchesSearch && productVariants.length > 0) {
+                    matchesSearch = productVariants.some(v =>
+                        (v.size && fuzzyMatch(v.size, searchQuery)) ||
+                        (v.color && fuzzyMatch(v.color, searchQuery)) ||
+                        (v.sku && fuzzyMatch(v.sku, searchQuery))
+                    )
+                }
+            }
 
             // Category filter
             const matchesCategory = selectedCategory === 'all' ||
