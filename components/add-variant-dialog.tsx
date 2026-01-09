@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Loader2, Plus } from 'lucide-react'
 
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
 interface AddVariantDialogProps {
     productId: string

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2, Layers } from 'lucide-react'
 
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
 interface BulkVariantDialogProps {
     productId: string
