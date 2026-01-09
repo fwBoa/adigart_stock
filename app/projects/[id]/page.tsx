@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getCurrentUserRole } from '@/app/user-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,10 @@ interface ProjectPageProps {
 export default async function ProjectPage({ params }: ProjectPageProps) {
     const { id } = await params
     const supabase = await createClient()
+
+    // Get user role
+    const role = await getCurrentUserRole()
+    const isAdmin = role === 'admin'
 
     // Fetch Project details first
     const { data: project, error: projectError } = await supabase
@@ -92,7 +97,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                         <Link href={`/projects/${id}/transactions`}>
                             <Button variant="outline">Historique</Button>
                         </Link>
-                        <AddProductDialog categories={categories} projectId={project.id} />
+                        {isAdmin && <AddProductDialog categories={categories} projectId={project.id} />}
                     </div>
                 </div>
             </div>
@@ -126,11 +131,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                         <p className="text-muted-foreground mb-4">
                             Ajoutez votre premier produit pour commencer.
                         </p>
-                        <AddProductDialog categories={categories} projectId={project.id} />
+                        {isAdmin && <AddProductDialog categories={categories} projectId={project.id} />}
                     </div>
                 </div>
             ) : (
-                <ProductFilters products={products} categories={categories} variants={variants} projectId={project.id} />
+                <ProductFilters products={products} categories={categories} variants={variants} projectId={project.id} isAdmin={isAdmin} />
             )}
         </main>
     )

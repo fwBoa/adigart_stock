@@ -44,10 +44,11 @@ interface ProductRowProps {
     projectId: string
     categories: Category[]
     variants: Variant[]
+    isAdmin: boolean
 }
 
 // Mobile Card Component
-export function ProductCard({ product, projectId, categories, variants }: ProductRowProps) {
+export function ProductCard({ product, projectId, categories, variants, isAdmin }: ProductRowProps) {
     const [qty, setQty] = useState(1)
     const [showVariants, setShowVariants] = useState(false)
     const [isPendingDelete, startDeleteTransition] = useTransition()
@@ -89,17 +90,21 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     {product.sku && <p className="text-xs text-muted-foreground">{product.sku}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
-                    <EditProductDialog product={product} categories={categories} projectId={projectId} />
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={handleDelete}
-                        disabled={isPendingDelete}
-                    >
-                        {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
+                    {isAdmin && (
+                        <>
+                            <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                            <EditProductDialog product={product} categories={categories} projectId={projectId} />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                onClick={handleDelete}
+                                disabled={isPendingDelete}
+                            >
+                                {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -120,17 +125,19 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                                     <span className="truncate">{v.size || ''}{v.size && v.color ? ' / ' : ''}{v.color || ''}</span>
                                     <div className="flex items-center gap-1">
                                         <span className={v.stock <= 5 ? 'text-orange-600 font-medium' : ''}>{v.stock}</span>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
-                                                    deleteVariant(v.id, projectId)
-                                                }
-                                            }}
-                                            className="opacity-50 hover:opacity-100 hover:text-destructive transition-opacity"
-                                            title="Supprimer"
-                                        >
-                                            ×
-                                        </button>
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
+                                                        deleteVariant(v.id, projectId)
+                                                    }
+                                                }}
+                                                className="opacity-50 hover:opacity-100 hover:text-destructive transition-opacity"
+                                                title="Supprimer"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -153,7 +160,7 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
                     >
                         {totalStock} en stock
                     </span>
-                    {variants.length === 0 && <RestockDialog product={product} />}
+                    {variants.length === 0 && isAdmin && <RestockDialog product={product} />}
                 </div>
             </div>
 
@@ -217,7 +224,7 @@ export function ProductCard({ product, projectId, categories, variants }: Produc
 }
 
 // Desktop Table Row Component
-export function ProductTableRow({ product, projectId, categories, variants }: ProductRowProps) {
+export function ProductTableRow({ product, projectId, categories, variants, isAdmin }: ProductRowProps) {
     const [qty, setQty] = useState(1)
     const [isPendingDelete, startDeleteTransition] = useTransition()
 
@@ -264,17 +271,19 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                                     <span key={v.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/50 group">
                                         {v.size || ''}{v.size && v.color ? '/' : ''}{v.color || ''}
                                         <span className={`ml-1 ${v.stock <= 5 ? 'text-orange-600 font-bold' : 'opacity-70'}`}>({v.stock})</span>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
-                                                    deleteVariant(v.id, projectId)
-                                                }
-                                            }}
-                                            className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                                            title="Supprimer cette variante"
-                                        >
-                                            ×
-                                        </button>
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer la variante ${v.size || ''}${v.size && v.color ? '/' : ''}${v.color || ''} ?\n\nLe stock sera restitué au produit parent.`)) {
+                                                        deleteVariant(v.id, projectId)
+                                                    }
+                                                }}
+                                                className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                                title="Supprimer cette variante"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </span>
                                 ))}
                             </div>
@@ -300,23 +309,26 @@ export function ProductTableRow({ product, projectId, categories, variants }: Pr
                     >
                         {product.stock}
                     </span>
-                    <RestockDialog product={product} />
+                    {isAdmin && <RestockDialog product={product} />}
                 </div>
             </td>
             <td className="p-4 align-middle">
                 <div className="flex items-center gap-2 justify-end">
-                    {/* Add Variant, Edit & Delete */}
-                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
-                    <EditProductDialog product={product} categories={categories} projectId={projectId} />
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={handleDelete}
-                        disabled={isPendingDelete}
-                    >
-                        {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
+                    {isAdmin && (
+                        <>
+                            <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                            <EditProductDialog product={product} categories={categories} projectId={projectId} />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                onClick={handleDelete}
+                                disabled={isPendingDelete}
+                            >
+                                {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                        </>
+                    )}
 
                     {/* Quantity Selector */}
                     <div className="flex items-center border rounded-md">

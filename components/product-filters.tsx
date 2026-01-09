@@ -42,6 +42,7 @@ interface ProductFiltersProps {
     categories: Category[]
     variants: Variant[]
     projectId: string
+    isAdmin: boolean
 }
 
 // Normalize string for fuzzy matching (removes accents, spaces, hyphens)
@@ -75,7 +76,7 @@ function fuzzyMatch(target: string, query: string): boolean {
     return false
 }
 
-export function ProductFilters({ products, categories, variants, projectId }: ProductFiltersProps) {
+export function ProductFilters({ products, categories, variants, projectId, isAdmin }: ProductFiltersProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [stockFilter, setStockFilter] = useState<string>('all')
@@ -204,7 +205,7 @@ export function ProductFilters({ products, categories, variants, projectId }: Pr
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} />
+                            <ProductCard key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} isAdmin={isAdmin} />
                         ))}
                     </div>
 
@@ -223,7 +224,7 @@ export function ProductFilters({ products, categories, variants, projectId }: Pr
                                 </thead>
                                 <tbody className="divide-y">
                                     {filteredProducts.map((product) => (
-                                        <ProductTableRow key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} />
+                                        <ProductTableRow key={product.id} product={product} projectId={projectId} categories={categories} variants={variants.filter(v => v.product_id === product.id)} isAdmin={isAdmin} />
                                     ))}
                                 </tbody>
                             </table>
