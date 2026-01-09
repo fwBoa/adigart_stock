@@ -98,16 +98,17 @@ export function UserList({ users, projects }: UserListProps) {
 
                 return (
                     <div key={user.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${user.role === 'admin'
-                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            {/* User Info */}
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center ${user.role === 'admin'
+                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                     }`}>
                                     {user.role === 'admin' ? <Crown className="h-5 w-5" /> : <User className="h-5 w-5" />}
                                 </div>
-                                <div>
-                                    <div className="font-medium">{user.email}</div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-medium truncate">{user.email}</div>
                                     <div className="text-sm text-muted-foreground">
                                         {user.role === 'admin' ? 'Administrateur' : 'Vendeur'}
                                         {user.role === 'seller' && (
@@ -119,7 +120,8 @@ export function UserList({ users, projects }: UserListProps) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            {/* Actions */}
+                            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
                                 {user.role === 'seller' && (
                                     <Button
                                         variant="outline"
@@ -134,8 +136,19 @@ export function UserList({ users, projects }: UserListProps) {
                                     size="sm"
                                     onClick={() => handleToggleRole(user.id, user.role)}
                                     disabled={isPending}
+                                    className="hidden sm:inline-flex"
                                 >
                                     {user.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleToggleRole(user.id, user.role)}
+                                    disabled={isPending}
+                                    className="sm:hidden"
+                                    title={user.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
+                                >
+                                    {user.role === 'admin' ? '↓' : '↑'}
                                 </Button>
                                 <Button
                                     variant="ghost"
