@@ -14,7 +14,16 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Loader2, Plus } from 'lucide-react'
+
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
 
 interface AddVariantDialogProps {
     productId: string
@@ -94,12 +103,16 @@ export function AddVariantDialog({ productId, productName, projectId, productSto
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="size">Taille</Label>
-                            <Input
-                                id="size"
-                                value={size}
-                                onChange={(e) => setSize(e.target.value)}
-                                placeholder="S, M, L, XL..."
-                            />
+                            <Select value={size} onValueChange={setSize}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Choisir..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SIZES.map(s => (
+                                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="color">Couleur</Label>
@@ -107,7 +120,7 @@ export function AddVariantDialog({ productId, productName, projectId, productSto
                                 id="color"
                                 value={color}
                                 onChange={(e) => setColor(e.target.value)}
-                                placeholder="Rouge, Bleu..."
+                                placeholder="Noir, Blanc..."
                             />
                         </div>
                     </div>
