@@ -90,16 +90,23 @@ export async function Header() {
                             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <Tag className="h-4 w-4" />
-                            <span>Catégories</span>
+                            <span className="sr-only sm:not-sr-only">Catégories</span>
                         </Link>
                         {isAdmin && (
-                            <Link
-                                href="/users"
-                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <Shield className="h-4 w-4" />
-                                <span>Users</span>
-                            </Link>
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <TrendingUp className="h-4 w-4" />
+                                </Link>
+                                <Link
+                                    href="/users"
+                                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <Shield className="h-4 w-4" />
+                                </Link>
+                            </>
                         )}
                     </div>
                 )}
