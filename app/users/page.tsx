@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Shield, User, Crown } from 'lucide-react'
 import { UserList } from '@/components/user-list'
+import { InviteUserForm } from '@/components/invite-user-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,8 +76,9 @@ export default async function UsersPage() {
                 </div>
             </div>
 
-            {/* User List */}
+            {/* User List with Invite Form */}
             <div className="rounded-lg border bg-card overflow-hidden">
+                <InviteUserForm />
                 <UserList users={users} projects={projects || []} />
             </div>
         </main>

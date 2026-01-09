@@ -97,8 +97,8 @@ export async function canAccessProject(projectId: string): Promise<boolean> {
     return !!assignment
 }
 
-// --- Invite User (Admin Only) ---
-export async function inviteUser(email: string, role: 'admin' | 'seller' = 'seller') {
+// --- Create Seller Account (Admin Only) ---
+export async function createSellerAccount(email: string, password: string) {
     const supabase = await createClient()
 
     // Check if current user is admin
@@ -107,31 +107,49 @@ export async function inviteUser(email: string, role: 'admin' | 'seller' = 'sell
     }
 
     try {
-        // Use Supabase Admin API to invite user
-        const { data, error } = await supabase.auth.admin.inviteUserByEmail(email)
+        // Create user via Supabase Auth signUp
+        // Note: This will create a user without email verification for simplicity
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                // Don't send confirmation email - admin creates the account
+                emailRedirectTo: undefined
+            }
+        })
 
-        if (error) {
-            // If admin API not available, user needs to sign up manually
-            // We'll create a placeholder profile
-            console.error('Invite error:', error)
-            return { message: 'Envoyez ce lien d\'inscription à l\'utilisateur: /signup' }
+        if (authError) {
+            console.error('Auth signUp error:', authError)
+            if (authError.message.includes('already registered')) {
+                return { message: 'Cet email est déjà enregistré' }
+            }
+            return { message: `Erreur: ${authError.message}` }
         }
 
-        // Create profile for invited user
-        if (data.user) {
-            await supabase
-                .from('user_profiles')
-                .insert({
-                    id: data.user.id,
-                    email: email,
-                    role: role
-                })
+        if (!authData.user) {
+            return { message: 'Erreur lors de la création du compte' }
         }
 
-        return { message: `Invitation envoyée à ${email}` }
+        // Create profile for the new user
+        const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+                id: authData.user.id,
+                email: email,
+                role: 'seller'
+            })
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError)
+            // User was created in auth but profile failed - still partial success
+            return { message: 'Compte créé mais profil non configuré. Vérifiez manuellement.' }
+        }
+
+        revalidatePath('/users')
+        return { message: `Vendeur "${email}" créé avec succès` }
     } catch (error) {
-        console.error('Invite User error:', error)
-        return { message: 'Erreur lors de l\'invitation' }
+        console.error('Create Seller error:', error)
+        return { message: 'Erreur lors de la création du compte' }
     }
 }
 
