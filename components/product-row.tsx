@@ -73,8 +73,8 @@ export function ProductCard({ product, projectId, categories, variants, isAdmin 
 
     return (
         <div className="border rounded-lg p-4 bg-card transition-all hover:shadow-md" data-low-stock={totalStock <= 5}>
-            {/* Header: Image + Name + Actions */}
-            <div className="flex items-start gap-3 mb-3">
+            {/* Header: Image + Name + SKU */}
+            <div className="flex items-start gap-3 mb-2">
                 {product.image_url ? (
                     <img
                         src={product.image_url}
@@ -88,27 +88,27 @@ export function ProductCard({ product, projectId, categories, variants, isAdmin 
                 )}
                 <div className="flex-1 min-w-0">
                     <h3 className="font-semibold truncate">{product.name}</h3>
-                    {product.sku && <p className="text-xs text-muted-foreground">{product.sku}</p>}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                    {isAdmin && (
-                        <>
-                            <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
-                            <BulkVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
-                            <EditProductDialog product={product} categories={categories} projectId={projectId} />
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                onClick={handleDelete}
-                                disabled={isPendingDelete}
-                            >
-                                {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            </Button>
-                        </>
-                    )}
+                    {product.sku && <p className="text-xs text-muted-foreground truncate">{product.sku}</p>}
                 </div>
             </div>
+
+            {/* Admin Actions Row */}
+            {isAdmin && (
+                <div className="flex items-center gap-1 mb-3 flex-wrap">
+                    <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                    <BulkVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                    <EditProductDialog product={product} categories={categories} projectId={projectId} />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={handleDelete}
+                        disabled={isPendingDelete}
+                    >
+                        {isPendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </Button>
+                </div>
+            )}
 
             {/* Variants Display */}
             {variants.length > 0 && (
