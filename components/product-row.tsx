@@ -9,6 +9,7 @@ import { RestockDialog } from '@/components/restock-dialog'
 import { EditProductDialog } from '@/components/edit-product-dialog'
 import { SaleDialog } from '@/components/sale-dialog'
 import { AddVariantDialog } from '@/components/add-variant-dialog'
+import { BulkVariantDialog } from '@/components/bulk-variant-dialog'
 
 type Category = {
     id: string
@@ -93,6 +94,7 @@ export function ProductCard({ product, projectId, categories, variants, isAdmin 
                     {isAdmin && (
                         <>
                             <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                            <BulkVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
                             <EditProductDialog product={product} categories={categories} projectId={projectId} />
                             <Button
                                 variant="ghost"
@@ -317,6 +319,7 @@ export function ProductTableRow({ product, projectId, categories, variants, isAd
                     {isAdmin && (
                         <>
                             <AddVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
+                            <BulkVariantDialog productId={product.id} productName={product.name} projectId={projectId} productStock={product.stock} currentVariantsTotal={currentVariantsTotal} />
                             <EditProductDialog product={product} categories={categories} projectId={projectId} />
                             <Button
                                 variant="ghost"
