@@ -57,17 +57,22 @@ export async function GET(
         return parts.join(' / ')
     }
 
-    // Generate CSV
-    const headers = ['Date', 'Produit', 'Variante', 'SKU', 'Type', 'Quantité', 'Montant (€)']
-    const rows = transactions?.map(t => [
-        new Date(t.created_at).toLocaleString('fr-FR'),
-        t.products?.name || '',
-        formatVariant(t.product_variants),
-        t.product_variants?.sku || t.products?.sku || '',
-        t.type === 'SALE' ? 'Vente' : 'Don',
-        t.quantity.toString(),
-        Number(t.amount).toFixed(2)
-    ]) || []
+    // Generate CSV with enhanced columns
+    const headers = ['Date', 'Heure', 'Produit', 'Variante', 'SKU', 'Type', 'Paiement', 'Quantité', 'Montant (€)']
+    const rows = transactions?.map(t => {
+        const date = new Date(t.created_at)
+        return [
+            date.toLocaleDateString('fr-FR'),
+            date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            t.products?.name || '',
+            formatVariant(t.product_variants),
+            t.product_variants?.sku || t.products?.sku || '',
+            t.type === 'SALE' ? 'Vente' : 'Don',
+            t.type === 'SALE' ? (t.payment_method === 'CASH' ? 'Espèces' : 'Carte') : '-',
+            t.quantity.toString(),
+            Number(t.amount).toFixed(2)
+        ]
+    }) || []
 
     const csvContent = [
         headers.join(';'),

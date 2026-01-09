@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/logout-button'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Tag, Shield } from 'lucide-react'
+import { Tag, Shield, TrendingUp } from 'lucide-react'
 
 async function getUserRole(userId: string): Promise<'admin' | 'seller' | null> {
     try {
@@ -62,13 +62,22 @@ export async function Header() {
                             Catégories
                         </Link>
                         {isAdmin && (
-                            <Link
-                                href="/users"
-                                className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                            >
-                                <Shield className="h-3 w-3" />
-                                Utilisateurs
-                            </Link>
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                                >
+                                    <TrendingUp className="h-3 w-3" />
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    href="/users"
+                                    className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                                >
+                                    <Shield className="h-3 w-3" />
+                                    Utilisateurs
+                                </Link>
+                            </>
                         )}
                     </nav>
                 )}
