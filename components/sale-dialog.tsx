@@ -42,6 +42,7 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
     const [open, setOpen] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+    const [comment, setComment] = useState('')
     const [state, action, isPending] = useActionState(processTransaction, initialState)
 
     const hasVariants = variants.length > 0
@@ -53,6 +54,7 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
             setOpen(false)
             setPaymentMethod('CASH')
             setSelectedVariantId(null)
+            setComment('')
         }
     }, [state.message, open])
 
@@ -100,6 +102,7 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
                     <input type="hidden" name="type" value={type} />
                     <input type="hidden" name="quantity" value={quantity} />
                     <input type="hidden" name="amount" value={amount} />
+                    <input type="hidden" name="comment" value={comment} />
                     {!isGift && <input type="hidden" name="paymentMethod" value={paymentMethod} />}
 
                     {/* Variant Selection */}
@@ -161,6 +164,22 @@ export function SaleDialog({ productId, productName, quantity, amount, disabled,
                             </button>
                         </div>
                     )}
+
+                    {/* Comment */}
+                    <div className="space-y-2">
+                        <label htmlFor="comment-input" className="text-sm font-medium text-muted-foreground">
+                            Commentaire (optionnel)
+                        </label>
+                        <input
+                            id="comment-input"
+                            type="text"
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Ex: Client régulier, remise..."
+                            maxLength={255}
+                            className="w-full px-3 py-2 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                        />
+                    </div>
 
                     {state.message && state.message !== 'Transaction successful' && (
                         <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm dark:bg-red-900/20 dark:text-red-400">

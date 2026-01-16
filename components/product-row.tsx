@@ -10,6 +10,7 @@ import { EditProductDialog } from '@/components/edit-product-dialog'
 import { SaleDialog } from '@/components/sale-dialog'
 import { AddVariantDialog } from '@/components/add-variant-dialog'
 import { BulkVariantDialog } from '@/components/bulk-variant-dialog'
+import { AddToCartButton } from '@/components/add-to-cart-button'
 
 type Category = {
     id: string
@@ -202,6 +203,14 @@ export function ProductCard({ product, projectId, categories, variants, isAdmin 
 
                 {/* Action Buttons */}
                 <div className="flex-1 flex gap-2">
+                    <AddToCartButton
+                        productId={product.id}
+                        productName={product.name}
+                        price={product.price}
+                        stock={totalStock}
+                        quantity={qty}
+                        variant={variants.length > 0 ? variants.find(v => v.stock > 0) : undefined}
+                    />
                     <SaleDialog
                         productId={product.id}
                         productName={product.name}
@@ -366,6 +375,14 @@ export function ProductTableRow({ product, projectId, categories, variants, isAd
                     </div>
 
                     {/* Transaction Buttons */}
+                    <AddToCartButton
+                        productId={product.id}
+                        productName={product.name}
+                        price={product.price}
+                        stock={totalStock}
+                        quantity={qty}
+                        variant={variants.length > 0 ? variants.find(v => v.stock > 0) : undefined}
+                    />
                     <SaleDialog
                         productId={product.id}
                         productName={product.name}

@@ -11,6 +11,7 @@ const TransactionSchema = z.object({
     paymentMethod: z.enum(['CASH', 'CARD']).optional(),
     quantity: z.number().int().positive(),
     amount: z.number().nonnegative(),
+    comment: z.string().max(255).optional(),
 })
 
 const CreateProductSchema = z.object({
@@ -42,6 +43,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
         paymentMethod: formData.get('paymentMethod') || undefined,
         quantity: Number(formData.get('quantity')),
         amount: Number(formData.get('amount')),
+        comment: formData.get('comment') || undefined,
     })
 
     if (!validatedFields.success) {
@@ -51,7 +53,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
         }
     }
 
-    const { productId, variantId, type, paymentMethod, quantity, amount } = validatedFields.data
+    const { productId, variantId, type, paymentMethod, quantity, amount, comment } = validatedFields.data
 
     const supabase = await createClient()
 
@@ -72,6 +74,17 @@ export async function processTransaction(prevState: TransactionState, formData: 
 
     if (!data.success) {
         return { message: data.error || 'Erreur inconnue' }
+    }
+
+    // Update the transaction with comment if provided
+    if (comment) {
+        await supabase
+            .from('transactions')
+            .update({ comment })
+            .eq('product_id', productId)
+            .is('comment', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
     }
 
     revalidatePath('/', 'layout')
@@ -700,4 +713,185 @@ export async function restockVariant(variantId: string, projectId: string, quant
 
     revalidatePath(`/projects/${projectId}`)
     return { message: 'Stock mis à jour' }
+}
+
+// --- Cart/Multi-Product Transaction ---
+
+type CartItem = {
+    productId: string
+    variantId: string | null
+    quantity: number
+    amount: number
+}
+
+export async function processCartTransaction(
+    items: CartItem[],
+    paymentMethod: 'CASH' | 'CARD',
+    comment?: string
+): Promise<{ success: boolean; message?: string }> {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { success: false, message: 'Non autorisé' }
+    }
+
+    if (items.length === 0) {
+        return { success: false, message: 'Panier vide' }
+    }
+
+    // Generate a group ID for all items in this cart
+    const saleGroupId = crypto.randomUUID()
+
+    try {
+        for (const item of items) {
+            // Process each item using the existing function
+            const { data, error } = await supabase.rpc('process_transaction', {
+                p_product_id: item.productId,
+                p_variant_id: item.variantId || null,
+                p_type: 'SALE',
+                p_payment_method: paymentMethod,
+                p_quantity: item.quantity,
+                p_amount: item.amount,
+            })
+
+            if (error) {
+                console.error('Cart transaction error:', error)
+                return { success: false, message: `Erreur: ${error.message}` }
+            }
+
+            if (!data.success) {
+                return { success: false, message: data.error || 'Erreur inconnue' }
+            }
+
+            // Update the transaction with group_id and comment
+            // Get the last inserted transaction for this product
+            const { error: updateError } = await supabase
+                .from('transactions')
+                .update({
+                    sale_group_id: saleGroupId,
+                    comment: comment || null
+                })
+                .eq('product_id', item.productId)
+                .is('sale_group_id', null)
+                .order('created_at', { ascending: false })
+                .limit(1)
+
+            if (updateError) {
+                console.error('Failed to update group_id:', updateError)
+            }
+        }
+
+        revalidatePath('/', 'layout')
+        return { success: true, message: 'Panier validé avec succès' }
+    } catch (error) {
+        console.error('Cart transaction failed:', error)
+        return { success: false, message: 'Erreur lors de la validation du panier' }
+    }
+}
+
+// --- Update Transaction ---
+
+export async function updateTransaction(
+    transactionId: string,
+    projectId: string,
+    data: {
+        quantity: number
+        amount: number
+        paymentMethod: 'CASH' | 'CARD' | null
+        type: 'SALE' | 'GIFT'
+        comment: string | null
+    }
+): Promise<{ success: boolean; message?: string }> {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { success: false, message: 'Non autorisé' }
+    }
+
+    // Check if admin
+    const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin') {
+        return { success: false, message: 'Réservé aux administrateurs' }
+    }
+
+    try {
+        const { data: result, error } = await supabase.rpc('update_transaction_with_stock', {
+            p_transaction_id: transactionId,
+            p_new_quantity: data.quantity,
+            p_new_amount: data.amount,
+            p_new_payment_method: data.type === 'SALE' ? (data.paymentMethod || 'CASH') : null,
+            p_new_type: data.type,
+            p_new_comment: data.comment,
+        })
+
+        if (error) {
+            console.error('Update transaction error:', error)
+            return { success: false, message: `Erreur: ${error.message}` }
+        }
+
+        if (!result.success) {
+            return { success: false, message: result.error || 'Erreur inconnue' }
+        }
+
+        revalidatePath(`/projects/${projectId}/transactions`)
+        revalidatePath('/', 'layout')
+        return { success: true, message: 'Transaction modifiée' }
+    } catch (error) {
+        console.error('Update transaction failed:', error)
+        return { success: false, message: 'Erreur lors de la modification' }
+    }
+}
+
+// --- Delete Transaction ---
+
+export async function deleteTransactionAction(
+    transactionId: string,
+    projectId: string
+): Promise<{ success: boolean; message?: string }> {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return { success: false, message: 'Non autorisé' }
+    }
+
+    // Check if admin
+    const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin') {
+        return { success: false, message: 'Réservé aux administrateurs' }
+    }
+
+    try {
+        const { data: result, error } = await supabase.rpc('delete_transaction_with_stock', {
+            p_transaction_id: transactionId,
+        })
+
+        if (error) {
+            console.error('Delete transaction error:', error)
+            return { success: false, message: `Erreur: ${error.message}` }
+        }
+
+        if (!result.success) {
+            return { success: false, message: result.error || 'Erreur inconnue' }
+        }
+
+        revalidatePath(`/projects/${projectId}/transactions`)
+        revalidatePath('/', 'layout')
+        return { success: true, message: 'Transaction supprimée (stock restauré)' }
+    } catch (error) {
+        console.error('Delete transaction failed:', error)
+        return { success: false, message: 'Erreur lors de la suppression' }
+    }
 }
