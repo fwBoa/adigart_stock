@@ -207,9 +207,9 @@ export function ProductCard({ product, projectId, categories, variants, isAdmin 
                         productId={product.id}
                         productName={product.name}
                         price={product.price}
-                        stock={totalStock}
+                        stock={product.stock}
                         quantity={qty}
-                        variant={variants.length > 0 ? variants.find(v => v.stock > 0) : undefined}
+                        variants={variants}
                     />
                     <SaleDialog
                         productId={product.id}
@@ -379,9 +379,9 @@ export function ProductTableRow({ product, projectId, categories, variants, isAd
                         productId={product.id}
                         productName={product.name}
                         price={product.price}
-                        stock={totalStock}
+                        stock={product.stock}
                         quantity={qty}
-                        variant={variants.length > 0 ? variants.find(v => v.stock > 0) : undefined}
+                        variants={variants}
                     />
                     <SaleDialog
                         productId={product.id}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateTransaction, deleteTransactionAction } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,6 +47,7 @@ interface EditTransactionDialogProps {
 }
 
 export function EditTransactionDialog({ transaction, projectId }: EditTransactionDialogProps) {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
     const [isDeleting, startDeleteTransition] = useTransition()
@@ -74,6 +76,7 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
 
             if (result.success) {
                 setOpen(false)
+                router.refresh() // Force immediate refresh
             } else {
                 setError(result.message || 'Erreur')
             }
@@ -85,6 +88,7 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
             const result = await deleteTransactionAction(transaction.id, projectId)
             if (result.success) {
                 setOpen(false)
+                router.refresh() // Force immediate refresh
             } else {
                 setError(result.message || 'Erreur')
             }
@@ -113,8 +117,8 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
                             type="button"
                             onClick={() => setType('SALE')}
                             className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${type === 'SALE'
-                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                    : 'border-muted hover:border-green-300'
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-muted hover:border-green-300'
                                 }`}
                         >
                             <ShoppingCart className={`h-5 w-5 ${type === 'SALE' ? 'text-green-600' : 'text-muted-foreground'}`} />
@@ -126,8 +130,8 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
                             type="button"
                             onClick={() => setType('GIFT')}
                             className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${type === 'GIFT'
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-muted hover:border-blue-300'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-muted hover:border-blue-300'
                                 }`}
                         >
                             <Gift className={`h-5 w-5 ${type === 'GIFT' ? 'text-blue-600' : 'text-muted-foreground'}`} />
@@ -144,8 +148,8 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
                                 type="button"
                                 onClick={() => setPaymentMethod('CASH')}
                                 className={`flex items-center justify-center gap-2 p-2 rounded-lg border-2 transition-all ${paymentMethod === 'CASH'
-                                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                        : 'border-muted hover:border-amber-300'
+                                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                    : 'border-muted hover:border-amber-300'
                                     }`}
                             >
                                 <Banknote className={`h-4 w-4 ${paymentMethod === 'CASH' ? 'text-amber-600' : 'text-muted-foreground'}`} />
@@ -157,8 +161,8 @@ export function EditTransactionDialog({ transaction, projectId }: EditTransactio
                                 type="button"
                                 onClick={() => setPaymentMethod('CARD')}
                                 className={`flex items-center justify-center gap-2 p-2 rounded-lg border-2 transition-all ${paymentMethod === 'CARD'
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                        : 'border-muted hover:border-purple-300'
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-muted hover:border-purple-300'
                                     }`}
                             >
                                 <CreditCard className={`h-4 w-4 ${paymentMethod === 'CARD' ? 'text-purple-600' : 'text-muted-foreground'}`} />

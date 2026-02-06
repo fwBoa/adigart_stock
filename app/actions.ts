@@ -57,7 +57,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
 
     const supabase = await createClient()
 
-    // Use atomic PostgreSQL function to prevent race conditions
+    // Use atomic PostgreSQL function - now includes comment parameter
     const { data, error } = await supabase.rpc('process_transaction', {
         p_product_id: productId,
         p_variant_id: variantId || null,
@@ -65,6 +65,7 @@ export async function processTransaction(prevState: TransactionState, formData: 
         p_payment_method: type === 'SALE' ? (paymentMethod || 'CASH') : null,
         p_quantity: quantity,
         p_amount: amount,
+        p_comment: comment || null,
     })
 
     if (error) {
@@ -74,17 +75,6 @@ export async function processTransaction(prevState: TransactionState, formData: 
 
     if (!data.success) {
         return { message: data.error || 'Erreur inconnue' }
-    }
-
-    // Update the transaction with comment if provided
-    if (comment) {
-        await supabase
-            .from('transactions')
-            .update({ comment })
-            .eq('product_id', productId)
-            .is('comment', null)
-            .order('created_at', { ascending: false })
-            .limit(1)
     }
 
     revalidatePath('/', 'layout')
@@ -745,7 +735,7 @@ export async function processCartTransaction(
 
     try {
         for (const item of items) {
-            // Process each item using the existing function
+            // Process each item - now with comment included in the RPC
             const { data, error } = await supabase.rpc('process_transaction', {
                 p_product_id: item.productId,
                 p_variant_id: item.variantId || null,
@@ -753,6 +743,7 @@ export async function processCartTransaction(
                 p_payment_method: paymentMethod,
                 p_quantity: item.quantity,
                 p_amount: item.amount,
+                p_comment: comment || null,
             })
 
             if (error) {
@@ -764,21 +755,16 @@ export async function processCartTransaction(
                 return { success: false, message: data.error || 'Erreur inconnue' }
             }
 
-            // Update the transaction with group_id and comment
-            // Get the last inserted transaction for this product
-            const { error: updateError } = await supabase
-                .from('transactions')
-                .update({
-                    sale_group_id: saleGroupId,
-                    comment: comment || null
-                })
-                .eq('product_id', item.productId)
-                .is('sale_group_id', null)
-                .order('created_at', { ascending: false })
-                .limit(1)
+            // Update the transaction with group_id using the returned transaction_id
+            if (data.transaction_id) {
+                const { error: updateError } = await supabase
+                    .from('transactions')
+                    .update({ sale_group_id: saleGroupId })
+                    .eq('id', data.transaction_id)
 
-            if (updateError) {
-                console.error('Failed to update group_id:', updateError)
+                if (updateError) {
+                    console.error('Failed to update group_id:', updateError)
+                }
             }
         }
 

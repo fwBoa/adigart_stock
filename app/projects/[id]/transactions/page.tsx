@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ShoppingCart, Gift, MessageSquare } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { ClearHistoryButton } from '@/components/clear-history-button'
-import { EditTransactionDialog } from '@/components/edit-transaction-dialog'
+import { TransactionTableClient } from '@/components/transaction-table-client'
 import { getCurrentUserRole } from '@/app/user-actions'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +40,7 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
       products!inner (
         id,
         name,
+        price,
         project_id
       ),
       product_variants (
@@ -65,10 +66,35 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
     const cardTotal = transactions?.filter(t => t.type === 'SALE' && t.payment_method === 'CARD').reduce((sum, t) => sum + Number(t.amount), 0) || 0
     const salesCount = transactions?.filter(t => t.type === 'SALE').length || 0
     const giftsCount = transactions?.filter(t => t.type === 'GIFT').length || 0
+    const giftsArticles = transactions?.filter(t => t.type === 'GIFT').reduce((sum, t) => sum + t.quantity, 0) || 0
     const totalItems = transactions?.reduce((sum, t) => sum + t.quantity, 0) || 0
 
+    // Calculate estimated gift value (what gifts would have been worth if sold)
+    const giftsValue = transactions?.filter(t => t.type === 'GIFT').reduce((sum, t) => {
+        const unitPrice = t.products?.price || 0
+        return sum + (Number(unitPrice) * t.quantity)
+    }, 0) || 0
+
+    // Average basket (panier moyen)
+    const averageBasket = salesCount > 0 ? totalSales / salesCount : 0
+
+    // Daily breakdown by payment method
+    const dailyStats: Record<string, { cash: number; card: number; date: string }> = {}
+    transactions?.filter(t => t.type === 'SALE').forEach(t => {
+        const date = new Date(t.created_at).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+        if (!dailyStats[date]) {
+            dailyStats[date] = { cash: 0, card: 0, date }
+        }
+        if (t.payment_method === 'CASH') {
+            dailyStats[date].cash += Number(t.amount)
+        } else if (t.payment_method === 'CARD') {
+            dailyStats[date].card += Number(t.amount)
+        }
+    })
+    const dailyBreakdown = Object.values(dailyStats).reverse() // Most recent first
+
     // Group transactions by sale_group_id for visual grouping
-    const groupColors = new Map<string, string>()
+    const groupColors: Record<string, string> = {}
     const colorPalette = [
         'bg-blue-50 dark:bg-blue-900/10',
         'bg-purple-50 dark:bg-purple-900/10',
@@ -79,8 +105,8 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
     let colorIndex = 0
 
     transactions?.forEach(t => {
-        if (t.sale_group_id && !groupColors.has(t.sale_group_id)) {
-            groupColors.set(t.sale_group_id, colorPalette[colorIndex % colorPalette.length])
+        if (t.sale_group_id && !groupColors[t.sale_group_id]) {
+            groupColors[t.sale_group_id] = colorPalette[colorIndex % colorPalette.length]
             colorIndex++
         }
     })
@@ -115,139 +141,74 @@ export default async function TransactionsPage({ params }: TransactionsPageProps
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Chiffre d'Affaires</p>
-                    <p className="text-2xl font-bold text-green-600">{totalSales.toFixed(2)} €</p>
-                </div>
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">💵 Espèces</p>
-                    <p className="text-2xl font-bold text-amber-600">{cashTotal.toFixed(2)} €</p>
-                </div>
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">💳 Carte</p>
-                    <p className="text-2xl font-bold text-purple-600">{cardTotal.toFixed(2)} €</p>
-                </div>
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Ventes</p>
-                    <p className="text-2xl font-bold">{salesCount}</p>
-                </div>
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Dons</p>
-                    <p className="text-2xl font-bold">{giftsCount}</p>
-                </div>
-                <div className="bg-card border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Articles</p>
-                    <p className="text-2xl font-bold">{totalItems}</p>
-                </div>
-            </div>
-
-            {/* Transactions Table */}
-            <div className="rounded-lg border bg-card overflow-hidden">
-                {!transactions || transactions.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground">
-                        Aucune transaction pour ce projet.
+            {/* Stats Section */}
+            <div className="space-y-4 mb-6">
+                {/* Row 1: Financial stats (4 cards) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-card border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground">Chiffre d'Affaires</p>
+                        <p className="text-2xl font-bold text-green-600">{totalSales.toFixed(2)} €</p>
                     </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-muted/50 border-b">
-                                <tr className="text-left">
-                                    <th className="p-4 font-medium text-muted-foreground">Date</th>
-                                    <th className="p-4 font-medium text-muted-foreground">Produit</th>
-                                    <th className="p-4 font-medium text-muted-foreground">Type</th>
-                                    <th className="p-4 font-medium text-muted-foreground">Paiement</th>
-                                    <th className="p-4 font-medium text-muted-foreground text-right">Qté</th>
-                                    <th className="p-4 font-medium text-muted-foreground text-right">Montant</th>
-                                    <th className="p-4 font-medium text-muted-foreground">Commentaire</th>
-                                    {isAdmin && <th className="p-4 font-medium text-muted-foreground text-center">Actions</th>}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {transactions.map((transaction) => {
-                                    const groupBg = transaction.sale_group_id ? groupColors.get(transaction.sale_group_id) : ''
-                                    return (
-                                        <tr
-                                            key={transaction.id}
-                                            className={`hover:bg-muted/50 transition-colors ${groupBg}`}
-                                        >
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    {transaction.sale_group_id && (
-                                                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary" title="Panier groupé">
-                                                            🛒
-                                                        </span>
-                                                    )}
-                                                    {new Date(transaction.created_at).toLocaleString('fr-FR', {
-                                                        day: '2-digit',
-                                                        month: '2-digit',
-                                                        year: '2-digit',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 font-medium">
-                                                <div>{transaction.products?.name}</div>
-                                                {transaction.product_variants && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        {transaction.product_variants.size || ''}
-                                                        {transaction.product_variants.size && transaction.product_variants.color ? ' / ' : ''}
-                                                        {transaction.product_variants.color || ''}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${transaction.type === 'SALE'
-                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                                    }`}>
-                                                    {transaction.type === 'SALE' ? (
-                                                        <><ShoppingCart className="h-3 w-3" /> Vente</>
-                                                    ) : (
-                                                        <><Gift className="h-3 w-3" /> Don</>
-                                                    )}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                {transaction.type === 'SALE' && transaction.payment_method && (
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${transaction.payment_method === 'CASH'
-                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                                        }`}>
-                                                        {transaction.payment_method === 'CASH' ? 'Espèces' : 'Carte'}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-right">{transaction.quantity}</td>
-                                            <td className="p-4 text-right font-medium">
-                                                {Number(transaction.amount).toFixed(2)} €
-                                            </td>
-                                            <td className="p-4 max-w-[150px]">
-                                                {transaction.comment && (
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <MessageSquare className="h-3 w-3 shrink-0" />
-                                                        <span className="truncate" title={transaction.comment}>{transaction.comment}</span>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            {isAdmin && (
-                                                <td className="p-4 text-center">
-                                                    <EditTransactionDialog
-                                                        transaction={transaction}
-                                                        projectId={id}
-                                                    />
-                                                </td>
-                                            )}
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
+                    <div className="bg-card border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground">💵 Espèces</p>
+                        <p className="text-2xl font-bold text-amber-600">{cashTotal.toFixed(2)} €</p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground">💳 Carte</p>
+                        <p className="text-2xl font-bold text-purple-600">{cardTotal.toFixed(2)} €</p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground">🛒 Panier moyen</p>
+                        <p className="text-2xl font-bold text-primary">{averageBasket.toFixed(2)} €</p>
+                    </div>
+                </div>
+
+                {/* Row 2: Counts (3 cards) */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-card border rounded-lg p-4 text-center">
+                        <p className="text-xs text-muted-foreground">Ventes</p>
+                        <p className="text-2xl font-bold">{salesCount}</p>
+                        <p className="text-xs text-muted-foreground">transactions</p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4 text-center">
+                        <p className="text-xs text-muted-foreground">🎁 Dons</p>
+                        <p className="text-2xl font-bold text-blue-600">{giftsArticles} <span className="text-sm font-normal">articles</span></p>
+                        <p className="text-xs text-blue-500">≈ {giftsValue.toFixed(2)} € de valeur</p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4 text-center">
+                        <p className="text-xs text-muted-foreground">📦 Articles</p>
+                        <p className="text-2xl font-bold">{totalItems}</p>
+                        <p className="text-xs text-muted-foreground">pièces sorties</p>
+                    </div>
+                </div>
+
+                {/* Row 3: Daily breakdown */}
+                {dailyBreakdown.length > 0 && (
+                    <div className="bg-card border rounded-lg p-4">
+                        <p className="text-sm font-semibold mb-3">📅 Détail par jour</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                            {dailyBreakdown.slice(0, 7).map((day) => (
+                                <div key={day.date} className="bg-muted/50 rounded-lg p-3 text-center">
+                                    <p className="text-xs font-semibold mb-2">{day.date}</p>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-amber-600 font-medium">💵 {day.cash.toFixed(0)} €</p>
+                                        <p className="text-sm text-purple-600 font-medium">💳 {day.card.toFixed(0)} €</p>
+                                        <p className="text-xs text-green-600 font-bold border-t border-border pt-1 mt-1">{(day.cash + day.card).toFixed(0)} €</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
+
+            {/* Transactions Table with Search */}
+            <TransactionTableClient
+                transactions={transactions || []}
+                projectId={id}
+                isAdmin={isAdmin}
+                groupColors={groupColors}
+            />
         </main>
     )
 }
